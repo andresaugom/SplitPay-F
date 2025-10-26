@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState } from "react";
-import { Box, Button, Typography, Stack, IconButton } from "@mui/material";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Box, Button, Typography, Stack } from "@mui/material";
 import SpContacts, { Customer } from "@/components/dashboard/splitpay/sp-contacts";
 import SPAmount from "@/components/dashboard/splitpay/sp-amount";
 import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distribution";
 
-// Mock contacts data (igual al original)
+// Mock contacts data
 const MOCK_CUSTOMERS: Customer[] = [
   { id: "1", name: "Ana", avatar: "", createdAt: new Date()},
   { id: "2", name: "Luis", avatar: "", createdAt: new Date()},
@@ -33,95 +32,65 @@ const SplitPaymentDemo: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: '400px', mx: "auto", p: 2 }}> {/* <-- Layout más estrecho */}
+    <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
+      <Typography variant="h5" mb={3}>
+        Split Payment Demo
+      </Typography>
 
-      {/* Flecha de "Atrás" y espaciador */}
-      <Box sx={{ minHeight: 48, display: 'flex', alignItems: 'center' }}> {/* Contenedor para estabilidad */}
-        {step > 1 && (
-          <IconButton onClick={handleBack} sx={{ mb: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-        )}
-      </Box>
-      
-      {/* Indicador de Pasos Circular */}
-      <Stack direction="row" justifyContent="center" spacing={2} sx={{ mb: 4 }}>
-        {[1, 2, 3].map((s) => (
-          <Box
-            key={s}
-            sx={{
-              width: 30,
-              height: 30,
-              borderRadius: '50%',
-              bgcolor: s === step ? 'primary.main' : 'grey.300',
-              color: s === step ? 'common.white' : 'grey.600',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
-            }}
-          >
-            {s}
-          </Box>
-        ))}
+      {/* Step Indicator */}
+      <Stack direction="row" spacing={2} mb={3}>
+        <Typography color={step === 1 ? "primary" : "text.secondary"}>1. Select Contacts</Typography>
+        <Typography color={step === 2 ? "primary" : "text.secondary"}>2. Enter Total</Typography>
+        <Typography color={step === 3 ? "primary" : "text.secondary"}>3. Split Payment</Typography>
       </Stack>
 
-      {/* Contenido del Paso */}
+      {/* Step Content */}
       {step === 1 && (
         <SpContacts
           rows={MOCK_CUSTOMERS}
           onSelectionChange={(sel) => setSelectedContacts(sel)}
-          onContinue={handleNext} // <-- Prop 'onContinue' añadido
         />
       )}
 
       {step === 2 && (
-        <>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main', textAlign: 'center' }}>
-            Total Amount
-          </Typography>
-          <SPAmount
-            value={total}
-            onChange={(val) => setTotal(val)}
-            label="Total Amount to Split"
-          />
-        </>
+        <SPAmount
+          value={total}
+          onChange={(val) => setTotal(val)}
+          label="Total Amount to Split"
+        />
       )}
 
       {step === 3 && (
         <>
-          <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main', textAlign: 'center' }}>
-            Split Details
-          </Typography>
           <SPSplitTable
             contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
             total={total ?? 0}
           />
+          <Box mt={2}>
+            <Typography variant="body2" color="text.secondary">
+              Review the allocations above before confirming.
+            </Typography>
+          </Box>
         </>
       )}
 
-      {/* Botones de Navegación (Solo para pasos 2 y 3) */}
-      <Box mt={4}>
-        {step === 2 && (
+      {/* Navigation Buttons */}
+      <Box mt={4} display="flex" justifyContent="space-between">
+        <Button disabled={step === 1} onClick={handleBack} variant="outlined">
+          Back
+        </Button>
+        {step < 3 && (
           <Button
             onClick={handleNext}
             variant="contained"
-            disabled={!canProceedStep2}
-            fullWidth // <-- Estilo añadido
-            sx={{ p: 1.5, borderRadius: 2, fontSize: '1.1rem' }} // <-- Estilo añadido
+            disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
           >
-            Continuar
+            Next
           </Button>
         )}
         {step === 3 && (
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => alert("Payment Confirmed!")}
-            fullWidth // <-- Estilo añadido
-            sx={{ p: 1.5, borderRadius: 2, fontSize: '1.1rem' }} // <-- Estilo añadido
-          >
-            Confirmar Pago
+          <Button variant="contained" color="success" onClick={() => alert("Payment Confirmed!")}>
+            Confirm
           </Button>
         )}
       </Box>
