@@ -8,9 +8,13 @@ import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distri
 
 // Mock contacts data
 const MOCK_CUSTOMERS: Customer[] = [
-  { id: "1", name: "Ana", avatar: "", createdAt: new Date()},
-  { id: "2", name: "Luis", avatar: "", createdAt: new Date()},
-  { id: "3", name: "Andrés", avatar: "", createdAt: new Date()}
+  { id: "1", name: "Jaime", avatar: "", createdAt: new Date()},
+  { id: "2", name: "Lalo", avatar: "", createdAt: new Date()},
+  { id: "1", name: "Shira", avatar: "", createdAt: new Date()},
+  { id: "2", name: "Andrés Gómez", avatar: "", createdAt: new Date()},
+  { id: "1", name: "Heidy Ochoa", avatar: "", createdAt: new Date()},
+  { id: "2", name: "Isaac Chávez", avatar: "", createdAt: new Date()},
+  { id: "3", name: "Jóse de la Madrid", avatar: "", createdAt: new Date()}
 ];
 
 const SplitPaymentDemo: React.FC = () => {
@@ -32,8 +36,9 @@ const SplitPaymentDemo: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
-      <Typography variant="h5" mb={3}>
+
+    <Box sx={{ maxWidth: 400, mx: "auto", p: 2 }}> 
+      <Typography variant="h5" mb={3}> 
         Split Payment Demo
       </Typography>
 
