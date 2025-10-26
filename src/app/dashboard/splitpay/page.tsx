@@ -1,5 +1,6 @@
 'use client';
 
+<<<<<<< HEAD
 import * as React from 'react';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -14,6 +15,20 @@ import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
 
 import { useSelection } from '@/hooks/use-selection';
+=======
+import React, { useState } from "react";
+import { Box, Button, Typography, Stack } from "@mui/material";
+import SpContacts, { Customer } from "@/components/dashboard/splitpay/sp-contacts";
+import SPAmount from "@/components/dashboard/splitpay/sp-amount";
+import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distribution";
+
+// Mock contacts data
+const MOCK_CUSTOMERS: Customer[] = [
+  { id: "1", name: "Ana", avatar: "", createdAt: new Date()},
+  { id: "2", name: "Luis", avatar: "", createdAt: new Date()},
+  { id: "3", name: "Andrés", avatar: "", createdAt: new Date()}
+];
+>>>>>>> 463abf84631825de949bddc850e0e5f28f7f6e2f
 
 export interface Customer {
   id: string;
@@ -58,6 +73,7 @@ export default function SpContacts({
   };
 
   return (
+<<<<<<< HEAD
     // CAMBIO 1: Quitado 'height: 100%' y 'display: flex'
     <Box sx={{ p: 2, bgcolor: 'background.default' }}>
       <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main', textAlign: 'center' }}>
@@ -136,6 +152,70 @@ export default function SpContacts({
       >
         Continuar
       </Button>
+=======
+    <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
+      <Typography variant="h5" mb={3}>
+        Split Payment Demo
+      </Typography>
+
+      {/* Step Indicator */}
+      <Stack direction="row" spacing={2} mb={3}>
+        <Typography color={step === 1 ? "primary" : "text.secondary"}>1. Select Contacts</Typography>
+        <Typography color={step === 2 ? "primary" : "text.secondary"}>2. Enter Total</Typography>
+        <Typography color={step === 3 ? "primary" : "text.secondary"}>3. Split Payment</Typography>
+      </Stack>
+
+      {/* Step Content */}
+      {step === 1 && (
+        <SpContacts
+          rows={MOCK_CUSTOMERS}
+          onSelectionChange={(sel) => setSelectedContacts(sel)}
+        />
+      )}
+
+      {step === 2 && (
+        <SPAmount
+          value={total}
+          onChange={(val) => setTotal(val)}
+          label="Total Amount to Split"
+        />
+      )}
+
+      {step === 3 && (
+        <>
+          <SPSplitTable
+            contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
+            total={total ?? 0}
+          />
+          <Box mt={2}>
+            <Typography variant="body2" color="text.secondary">
+              Review the allocations above before confirming.
+            </Typography>
+          </Box>
+        </>
+      )}
+
+      {/* Navigation Buttons */}
+      <Box mt={4} display="flex" justifyContent="space-between">
+        <Button disabled={step === 1} onClick={handleBack} variant="outlined">
+          Back
+        </Button>
+        {step < 3 && (
+          <Button
+            onClick={handleNext}
+            variant="contained"
+            disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
+          >
+            Next
+          </Button>
+        )}
+        {step === 3 && (
+          <Button variant="contained" color="success" onClick={() => alert("Payment Confirmed!")}>
+            Confirm
+          </Button>
+        )}
+      </Box>
+>>>>>>> 463abf84631825de949bddc850e0e5f28f7f6e2f
     </Box>
   );
 }
