@@ -52,6 +52,20 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
     [id: string]: { value: string; lastEdited: 'amount' | 'percent' }
   }>({});
 
+  // --- INICIO DEL CAMBIO: Estilos para ocultar spinners ---
+  const hideSpinnersSx = {
+    // Oculta spinners en Chrome, Safari, Edge
+    '& input[type=number]::-webkit-inner-spin-button, & input[type=number]::-webkit-outer-spin-button': {
+      '-webkit-appearance': 'none',
+      margin: 0
+    },
+    // Oculta spinners en Firefox
+    '& input[type=number]': {
+      '-moz-appearance': 'textfield'
+    }
+  };
+  // --- FIN DEL CAMBIO ---
+
   useEffect(() => {
     const newAllocations: { [id: string]: { value: string; lastEdited: 'amount' | 'percent' } } = {};
     const numContacts = contacts.length;
@@ -166,9 +180,10 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
         sx={{ bgcolor: 'grey.200', p: 2, borderRadius: 2 }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'grey.700' }}>
-          Modo:
+          Método:
         </Typography>
         <FormControl fullWidth>
+          {/* --- INICIO DEL CAMBIO --- */}
           <Select
             value={splitMode}
             onChange={handleModeChange}
@@ -176,20 +191,25 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
               bgcolor: 'common.white',
               borderRadius: 2,
               '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+              '& .MuiSelect-select': { color: 'grey.700' } // Color del valor seleccionado
             }}
           >
-            <MenuItem value="equal">Todos por igual</MenuItem>
-            <MenuItem value="custom">Personalizado</MenuItem>
+            <MenuItem value="equal" sx={{ color: 'grey.700' }}>
+              Todos por igual
+            </MenuItem>
+            <MenuItem value="custom" sx={{ color: 'grey.700' }}>
+              Personalizado
+            </MenuItem>
           </Select>
+          {/* --- FIN DEL CAMBIO --- */}
         </FormControl>
       </Paper>
 
-      {/* --- INICIO CAMBIO 1: APARTADO "TOTAL DE LA CUENTA" --- */}
-      {/* Esta caja SIEMPRE es visible para recordar el objetivo */}
+      {/* --- TOTAL DE LA CUENTA --- */}
       <Paper
         elevation={0}
         sx={{
-          bgcolor: 'grey.100', // Un fondo neutro
+          bgcolor: 'grey.100', 
           border: '1px solid',
           borderColor: 'grey.300',
           p: 1.5,
@@ -199,19 +219,19 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
           alignItems: 'center',
         }}
       >
-        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+        <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'grey.700' }}>
           Total de la Cuenta:
         </Typography>
         <Typography
           variant="body1"
           sx={{
             fontWeight: 'bold',
+            color: 'grey.700',
           }}
         >
           {formatCurrency(total)} (100%)
         </Typography>
       </Paper>
-      {/* --- FIN CAMBIO 1 --- */}
 
       {/* === ENCABEZADO DE LA LISTA === */}
       <Paper
@@ -250,57 +270,76 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
       >
         <Stack divider={<Divider flexItem />}>
           
-          {/* --- Filas de Contactos --- */}
-          {calculatedAllocations.map((contact) => (
-            <Box
-              key={contact.id}
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 100px 80px',
-                alignItems: 'center',
-                gap: 1.5,
-                p: 1.5,
-              }}
-            >
-              <Typography variant="body1" noWrap sx={{ fontWeight: 500 }}>
-                {contact.name}
-              </Typography>
-              
-              {splitMode === 'equal' ? (
-                <>
-                  <Typography variant="body1" sx={{ textAlign: 'right' }}>
-                    {formatCurrency(contact.amount)}
-                  </Typography>
-                  <Typography variant="body1" sx={{ textAlign: 'right' }}>
-                    {formatPercentage(contact.percentage)}
-                  </Typography>
-                </>
-              ) : (
-                <>
-                  <TextField
-                    type="number"
-                    size="small"
-                    value={allocations[contact.id]?.lastEdited === 'amount' ? allocations[contact.id]?.value : contact.amount.toFixed(2)}
-                    onChange={(e) => handleAllocationChange(contact.id, e.target.value, 'amount')}
-                    InputProps={{
-                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                      sx: { fontSize: '0.9rem' }
-                    }}
-                  />
-                  <TextField
-                    type="number"
-                    size="small"
-                    value={allocations[contact.id]?.lastEdited === 'percent' ? allocations[contact.id]?.value : contact.percentage.toFixed(0)}
-                    onChange={(e) => handleAllocationChange(contact.id, e.target.value, 'percent')}
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
-                      sx: { fontSize: '0.9rem' }
-                    }}
-                  />
-                </>
-              )}
-            </Box>
-          ))}
+          {/* --- Contenedor Scrolleable --- */}
+          <Box
+            sx={{
+              height: 120,
+              overflowY: 'auto',
+              '&::-webkit-scrollbar': { width: '6px' },
+              '&::-webkit-scrollbar-track': { background: '#f1f1f1' },
+              '&::-webkit-scrollbar-thumb': { background: '#ccc', borderRadius: '3px' },
+              '&::-webkit-scrollbar-thumb:hover': { background: '#aaa' }
+            }}
+          >
+            {/* --- Filas de Contactos --- */}
+            {calculatedAllocations.map((contact) => (
+              <Box
+                key={contact.id}
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 100px 80px',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  p: 1.5,
+                  borderBottom: '1px solid',
+                  borderColor: 'grey.200',
+                  '&:last-child': {
+                    borderBottom: 'none'
+                  }
+                }}
+              >
+                <Typography variant="body1" noWrap sx={{ fontWeight: 500, color: 'grey.700' }}>
+                  {contact.name}
+                </Typography>
+                
+                {splitMode === 'equal' ? (
+                  <>
+                    <Typography variant="body1" sx={{ textAlign: 'right', color: 'grey.700' }}>
+                      {formatCurrency(contact.amount)}
+                    </Typography>
+                    <Typography variant="body1" sx={{ textAlign: 'right', color: 'grey.700' }}>
+                      {formatPercentage(contact.percentage)}
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <TextField
+                      type="number"
+                      size="small"
+                      value={allocations[contact.id]?.lastEdited === 'amount' ? allocations[contact.id]?.value : contact.amount.toFixed(2)}
+                      onChange={(e) => handleAllocationChange(contact.id, e.target.value, 'amount')}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                        sx: { fontSize: '0.9rem' }
+                      }}
+                      sx={hideSpinnersSx} 
+                    />
+                    <TextField
+                      type="number"
+                      size="small"
+                      value={allocations[contact.id]?.lastEdited === 'percent' ? allocations[contact.id]?.value : contact.percentage.toFixed(0)}
+                      onChange={(e) => handleAllocationChange(contact.id, e.target.value, 'percent')}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                        sx: { fontSize: '0.9rem' }
+                      }}
+                      sx={hideSpinnersSx} 
+                    />
+                  </>
+                )}
+              </Box>
+            ))}
+          </Box>
           
           {/* --- Fila de Total (Running Total) --- */}
           <Box
@@ -313,7 +352,7 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
               bgcolor: 'grey.50'
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'grey.700' }}>
               Total Asignado
             </Typography>
             <Typography 
@@ -321,7 +360,6 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
               sx={{ 
                 fontWeight: 'bold', 
                 textAlign: 'right',
-                // Lógica de color: rojo si es incorrecto, azul si es correcto
                 color: isSplitDisabled ? 'error.main' : 'primary.main'
               }}
             >
@@ -341,13 +379,11 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
         </Stack>
       </Paper>
 
-      {/* --- INICIO CAMBIO 2: APARTADO "RESTANTE" (REEMPLAZA AL ANTERIOR) --- */}
-      {/* Esta caja solo aparece en modo 'custom' */}
+      {/* --- APARTADO "RESTANTE" --- */}
       {splitMode === 'custom' && (
         <Paper
           elevation={0}
           sx={{
-            // Rojo si está deshabilitado (incorrecto), Azul si está habilitado (correcto)
             bgcolor: isSplitDisabled ? 'rgba(211, 47, 47, 0.08)' : 'rgba(0, 118, 255, 0.08)',
             p: 1.5,
             borderRadius: 2,
@@ -363,9 +399,8 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
               color: isSplitDisabled ? 'error.main' : 'primary.main'
             }}
           >
-            {/* Cambia el texto: si está correcto, dice "Completo". Si no, dice qué pasa. */}
             {isSplitDisabled 
-              ? (remainingAmount > 0 ? 'Falta por asignar:' : 'Sobra:')
+              ? (remainingAmount > 0 ? 'Faltante:' : 'Sobrante:')
               : 'Asignación Completa'}
           </Typography>
           <Typography
@@ -375,7 +410,6 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
               color: isSplitDisabled ? 'error.main' : 'primary.main'
             }}
           >
-            {/* Muestra cuánto falta/sobra. Si está correcto, muestra $0.00 */}
             {isSplitDisabled
               ? `${formatCurrency(Math.abs(remainingAmount))} (${formatPercentage(Math.abs(remainingPercentage))})`
               : `${formatCurrency(0)} (0%)`
@@ -383,7 +417,6 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
           </Typography>
         </Paper>
       )}
-      {/* --- FIN CAMBIO 2 --- */}
 
       {/* === BOTÓN SPLIT === */}
       <Button
@@ -399,7 +432,6 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
           textTransform: 'none',
           boxShadow: '0 4px 14px 0 rgba(0, 118, 255, 0.39)',
         }}
-        // La lógica de 'disabled' ya estaba correcta y conectada
         disabled={isSplitDisabled}
       >
         Split

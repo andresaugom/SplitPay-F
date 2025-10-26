@@ -101,12 +101,11 @@ const SPAmount: React.FC<SPAmountProps> = ({ value, onChange, label }) => {
         sx={{ bgcolor: 'grey.200', p: 2, borderRadius: 2 }}
       >
         <Stack spacing={1.5}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+          {/* --- CAMBIO AQUÍ --- */}
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: 'grey.700' }}>
             Extra:
           </Typography>
           
-          {/* --- INICIO DEL CAMBIO --- */}
-          {/* Se movió el estilo al 'ToggleButtonGroup' */}
           <ToggleButtonGroup
             value={tipPercent}
             exclusive
@@ -123,6 +122,11 @@ const SPAmount: React.FC<SPAmountProps> = ({ value, onChange, label }) => {
                   bgcolor: '#D32F2F',
                 },
               },
+              // --- CAMBIO AQUÍ ---
+              // Targeta a los botones NO seleccionados
+              '& .MuiToggleButton-root': {
+                 color: 'grey.700'
+              }
             }}
           >
             <ToggleButton value="5" aria-label="5 percent tip">
@@ -131,7 +135,6 @@ const SPAmount: React.FC<SPAmountProps> = ({ value, onChange, label }) => {
             <ToggleButton value="10" aria-label="10 percent tip">
               +10%
             </ToggleButton>
-            {/* Se quitó el 'sx' individual de este botón */}
             <ToggleButton value="15" aria-label="15 percent tip">
               +15%
             </ToggleButton>
@@ -139,7 +142,6 @@ const SPAmount: React.FC<SPAmountProps> = ({ value, onChange, label }) => {
               +...%
             </ToggleButton>
           </ToggleButtonGroup>
-          {/* --- FIN DEL CAMBIO --- */}
 
           {tipPercent === 'custom' && (
             <TextField
@@ -169,10 +171,12 @@ const SPAmount: React.FC<SPAmountProps> = ({ value, onChange, label }) => {
           justifyContent="space-between"
           alignItems="center"
         >
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          {/* --- CAMBIO AQUÍ --- */}
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'grey.700' }}>
             Total:
           </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+          {/* --- CAMBIO AQUÍ --- */}
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'grey.700' }}>
             {formatCurrency(value)}
           </Typography>
         </Stack>

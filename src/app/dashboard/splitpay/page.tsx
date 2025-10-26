@@ -42,9 +42,9 @@ const SplitPaymentDemo: React.FC = () => {
   variant="h5" 
   mb={3}
   sx={{
-    textAlign: 'center',      // Centra el texto
-    color: 'primary.main',    // Le da el color azul primario de tu tema
-    fontWeight: 900,          // Fuente muy gruesa (como en la imagen)
+    textAlign: 'center',
+    color: 'primary.main',
+    fontWeight: 900,
   }}
 > 
   {step === 1 ? "Splitters" : (step === 2 ? "SplitInfo" : "SplitConfig")}
@@ -87,57 +87,76 @@ const SplitPaymentDemo: React.FC = () => {
       {/* --- FIN DEL INDICADOR DE PASOS --- */}
 
       {/* Step Content */}
+      
+      {/* --- INICIO DEL CAMBIO: 'height' aumentada para 5 filas --- */}
       {step === 1 && (
-        <SpContacts
-          rows={MOCK_CUSTOMERS}
-          onSelectionChange={(sel) => setSelectedContacts(sel)}
-        />
+        <Box 
+          sx={{ 
+            // CAMBIO: Aumentado para mostrar ~5 filas
+            height: 280, 
+            overflowY: 'auto', 
+            
+            // Estilos para el contenedor
+            border: '1px solid',
+            borderColor: 'grey.200',
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            
+            // Estilos para la barra de scroll
+            '&::-webkit-scrollbar': { width: '6px' },
+            '&::-webkit-scrollbar-track': { background: '#f1f1f1' },
+            '&::-webkit-scrollbar-thumb': { background: '#ccc', borderRadius: '3px' },
+            '&::-webkit-scrollbar-thumb:hover': { background: '#aaa' }
+          }}
+        >
+          <SpContacts
+            rows={MOCK_CUSTOMERS}
+            onSelectionChange={(sel) => setSelectedContacts(sel)}
+          />
+        </Box>
       )}
+      {/* --- FIN DEL CAMBIO --- */}
 
       {step === 2 && (
-        <SPAmount
-          value={total}
-          onChange={(val) => setTotal(val)}
-          label="Monto:"
-        />
+        <Box>
+          {/* CAMBIO: Aumento del tamaño de la palabra "Monto" */}
+          <Typography variant="h6" component="div" fontWeight="bold" mb={1}>
+            Monto:
+          </Typography>
+          <SPAmount
+            value={total}
+            onChange={(val) => setTotal(val)}
+            // CAMBIO: Se elimina la prop 'label' ya que ahora se usa un <Typography>
+            label=""
+          />
+        </Box>
       )}
 
-      {/* --- INICIO DEL CAMBIO --- */}
-      {/* SPSplitTable ahora se renderiza solo.
-        Ya no tiene el texto "Review..." 
-      */}
       {step === 3 && (
         <SPSplitTable
           contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
           total={total ?? 0}
         />
       )}
-      {/* --- FIN DEL CAMBIO --- */}
 
 
       {/* Navigation Buttons */}
       <Box mt={4} display="flex" justifyContent={step === 1 ? 'flex-end' : 'space-between'}>
-        {/* El botón "Back" ahora se muestra en el paso 2 y 3 */}
         {step > 1 && (
           <Button onClick={handleBack} variant="outlined">
-            Back
+            Regresar
           </Button>
         )}
 
-        {/* El botón "Next" solo se muestra en los pasos 1 y 2 */}
         {step < 3 && (
           <Button
             onClick={handleNext}
             variant="contained"
             disabled={step === 1 ? !canProceedStep1 : !canProceedStep2}
           >
-            Next
+            Continuar
           </Button>
         )}
-        
-        {/* El botón "Confirm" del paso 3 ha sido ELIMINADO.
-          SPSplitTable ahora tiene su propio botón "Split".
-        */}
       </Box>
     </Box>
   );

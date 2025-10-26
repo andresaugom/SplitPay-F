@@ -71,8 +71,9 @@ export default function SpContacts({
           <TableHead>
             <TableRow>
               <TableCell padding="checkbox">
+                {/* --- INICIO DEL CAMBIO --- */}
                 <Checkbox
-                  color="error" // <-- CAMBIO AQUÍ
+                  // color="error" <-- Se quita
                   checked={selectedAll}
                   indeterminate={selectedSome}
                   onChange={(event) => {
@@ -82,11 +83,21 @@ export default function SpContacts({
                       deselectAll();
                     }
                   }}
+                  sx={{
+                    color: 'grey.700', // Color del borde (no seleccionado)
+                    '&.Mui-checked': {
+                      color: 'error.main', // Color (seleccionado)
+                    },
+                    '&.Mui-indeterminate': {
+                      color: 'error.main', // Color (indeterminado)
+                    },
+                  }}
                 />
+                {/* --- FIN DEL CAMBIO --- */}
               </TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Phone</TableCell>
+              <TableCell sx={{ color: 'grey.700', fontWeight: 'bold' }}>Contactos</TableCell>
+              <TableCell sx={{ color: 'grey.700' }}>Email</TableCell>
+              <TableCell sx={{ color: 'grey.700' }}>Phone</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -96,8 +107,9 @@ export default function SpContacts({
               return (
                 <TableRow hover key={row.id} selected={isSelected}>
                   <TableCell padding="checkbox">
+                    {/* --- INICIO DEL CAMBIO --- */}
                     <Checkbox
-                      color="error" // <-- CAMBIO AQUÍ
+                      // color="error" <-- Se quita
                       checked={isSelected}
                       onChange={(event) => {
                         if (event.target.checked) {
@@ -106,12 +118,21 @@ export default function SpContacts({
                           deselectOne(row.id);
                         }
                       }}
+                      sx={{
+                        color: 'grey.700', // Color del borde (no seleccionado)
+                        '&.Mui-checked': {
+                          color: 'error.main', // Color (seleccionado)
+                        },
+                      }}
                     />
+                    {/* --- FIN DEL CAMBIO --- */}
                   </TableCell>
                   <TableCell>
                     <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
                       <Avatar src={row.avatar} />
-                      <Typography variant="subtitle2">{row.name}</Typography>
+                      <Typography variant="subtitle2" sx={{ color: 'grey.700' }}>
+                        {row.name}
+                      </Typography>
                     </Stack>
                   </TableCell>
                 </TableRow>
