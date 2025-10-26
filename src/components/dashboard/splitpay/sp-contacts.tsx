@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 import { useSelection } from '@/hooks/use-selection';
 
 function noop(): void {
-    // do nothing
+  // do nothing
 }
 
 export interface Contact {
@@ -50,82 +50,83 @@ export default function SpContacts({
         return rows.map((contact) => contact.id);
     }, [rows]);
 
-    const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
+  const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
 
-    // Notify parent about selected contacts whenever selection or rows change
-    React.useEffect(() => {
-        const selectedSet = selected ?? new Set<string>();
-        const selectedContacts = rows.filter((r) => selectedSet.has(r.id));
-        onSelectionChange?.(selectedContacts);
-    }, [selected, rows, onSelectionChange]);
+  // Notify parent about selected contacts whenever selection or rows change
+  React.useEffect(() => {
+    const selectedSet = selected ?? new Set<string>();
+    const selectedContacts = rows.filter((r) => selectedSet.has(r.id));
+    onSelectionChange?.(selectedContacts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, rows]); // <-- ARREGLO AQUÍ
 
-    const selectedSome = (selected?.size ?? 0) > 0 && (selected?.size ?? 0) < rows.length;
-    const selectedAll = rows.length > 0 && selected?.size === rows.length;
+  const selectedSome = (selected?.size ?? 0) > 0 && (selected?.size ?? 0) < rows.length;
+  const selectedAll = rows.length > 0 && selected?.size === rows.length;
 
-    return (
-        <Card>
-            <Box sx={{ overflowX: 'auto' }}>
-                <Table sx={{ minWidth: '800px' }}>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell padding="checkbox">
-                                <Checkbox
-                                    checked={selectedAll}
-                                    indeterminate={selectedSome}
-                                    onChange={(event) => {
-                                        if (event.target.checked) {
-                                            selectAll();
-                                        } else {
-                                            deselectAll();
-                                        }
-                                    }}
-                                />
-                            </TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Phone</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {rows.map((row) => {
-                            const isSelected = selected?.has(row.id);
+  return (
+    <Card>
+      <Box sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: '800px' }}>
+          <TableHead>
+            <TableRow>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  checked={selectedAll}
+                  indeterminate={selectedSome}
+                  onChange={(event) => {
+                    if (event.target.checked) {
+                      selectAll();
+                    } else {
+                      deselectAll();
+                    }
+                  }}
+                />
+              </TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Phone</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {rows.map((row) => {
+              const isSelected = selected?.has(row.id);
 
-                            return (
-                                <TableRow hover key={row.id} selected={isSelected}>
-                                    <TableCell padding="checkbox">
-                                        <Checkbox
-                                            checked={isSelected}
-                                            onChange={(event) => {
-                                                if (event.target.checked) {
-                                                    selectOne(row.id);
-                                                } else {
-                                                    deselectOne(row.id);
-                                                }
-                                            }}
-                                        />
-                                    </TableCell>
-                                    <TableCell>
-                                        <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
-                                            <Avatar src={row.avatar} />
-                                            <Typography variant="subtitle2">{row.name}</Typography>
-                                        </Stack>
-                                    </TableCell>
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </Box>
-            <Divider />
-            <TablePagination
-                component="div"
-                count={count}
-                onPageChange={noop}
-                onRowsPerPageChange={noop}
-                page={page}
-                rowsPerPage={rowsPerPage}
-                rowsPerPageOptions={[5, 10, 25]}
-            />
-        </Card>
-    );
+              return (
+                <TableRow hover key={row.id} selected={isSelected}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={(event) => {
+                        if (event.target.checked) {
+                          selectOne(row.id);
+                        } else {
+                          deselectOne(row.id);
+                        }
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Stack sx={{ alignItems: 'center' }} direction="row" spacing={2}>
+                      <Avatar src={row.avatar} />
+                      <Typography variant="subtitle2">{row.name}</Typography>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Box>
+      <Divider />
+      <TablePagination
+        component="div"
+        count={count}
+        onPageChange={noop}
+        onRowsPerPageChange={noop}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        rowsPerPageOptions={[5, 10, 25]}
+      />
+    </Card>
+  );
 }
