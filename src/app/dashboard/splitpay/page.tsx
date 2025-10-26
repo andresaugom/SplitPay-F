@@ -38,9 +38,18 @@ const SplitPaymentDemo: React.FC = () => {
   return (
 
     <Box sx={{ maxWidth: 400, mx: "auto", p: 2 }}> 
-      <Typography variant="h5" mb={3}> 
-        Split Payment Demo
-      </Typography>
+<Typography 
+  variant="h5" 
+  mb={3}
+  sx={{
+    textAlign: 'center',      // Centra el texto
+    color: 'primary.main',    // Le da el color azul primario de tu tema
+    fontWeight: 900,          // Fuente muy gruesa (como en la imagen)
+  }}
+> 
+  {/* --- CAMBIO AQUÍ --- */}
+  {step === 1 ? "Splitters" : (step === 2 ? "SplitInfo" : "Split Details")}
+</Typography>
 
       {/* --- INICIO DEL INDICADOR DE PASOS CORREGIDO --- */}
       <Stack 
