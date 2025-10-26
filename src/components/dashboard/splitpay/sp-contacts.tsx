@@ -71,6 +71,7 @@ export default function SpContacts({
             <TableRow>
               <TableCell padding="checkbox">
                 <Checkbox
+                  color="error" // <-- CAMBIO AQUÍ
                   checked={selectedAll}
                   indeterminate={selectedSome}
                   onChange={(event) => {
@@ -95,6 +96,7 @@ export default function SpContacts({
                 <TableRow hover key={row.id} selected={isSelected}>
                   <TableCell padding="checkbox">
                     <Checkbox
+                      color="error" // <-- CAMBIO AQUÍ
                       checked={isSelected}
                       onChange={(event) => {
                         if (event.target.checked) {

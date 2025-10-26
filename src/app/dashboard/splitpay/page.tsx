@@ -59,17 +59,55 @@ const SplitPaymentDemo: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
-      <Typography variant="h5" mb={3}>
-        Split Payment Demo
-      </Typography>
 
-      {/* Step Indicator */}
-      <Stack direction="row" spacing={2} mb={3}>
-        <Typography color={step === 1 ? "primary" : "text.secondary"}>1. Select Contacts</Typography>
-        <Typography color={step === 2 ? "primary" : "text.secondary"}>2. Enter Total</Typography>
-        <Typography color={step === 3 ? "primary" : "text.secondary"}>3. Split Payment</Typography>
+    <Box sx={{ maxWidth: 400, mx: "auto", p: 2 }}> 
+<Typography 
+  variant="h5" 
+  mb={3}
+  sx={{
+    textAlign: 'center',      // Centra el texto
+    color: 'primary.main',    // Le da el color azul primario de tu tema
+    fontWeight: 900,          // Fuente muy gruesa (como en la imagen)
+  }}
+> 
+  {step === 1 ? "Splitters" : (step === 2 ? "SplitInfo" : "SplitConfig")}
+</Typography>
+
+      {/* --- INDICADOR DE PASOS --- */}
+      <Stack 
+        direction="row" 
+        alignItems="center"
+        justifyContent="center"
+        mb={3} 
+      >
+        {[1, 2, 3].map((s, index) => (
+          <React.Fragment key={s}>
+            {index > 0 && (
+              <Box sx={{
+                width: { xs: 30, sm: 50 },
+                height: 2,
+                bgcolor: 'grey.300',
+              }} />
+            )}
+            
+            <Box sx={{
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              bgcolor: step === s ? 'primary.main' : 'grey.300',
+              color: step === s ? 'common.white' : 'grey.600',
+            }}>
+              {s}
+            </Box>
+          </React.Fragment>
+        ))}
       </Stack>
+      {/* --- FIN DEL INDICADOR DE PASOS --- */}
 
       {/* Estado de carga / error */}
       {loading && (
@@ -80,44 +118,44 @@ const SplitPaymentDemo: React.FC = () => {
       {error && <Alert severity="error">{error}</Alert>}
 
       {/* Step Content */}
-      {!loading && !error && (
-        <>
-          {step === 1 && (
-            <SpContacts
-              rows={contacts}
-              onSelectionChange={(sel) => setSelectedContacts(sel)}
-            />
-          )}
-
-          {step === 2 && (
-            <SPAmount
-              value={total}
-              onChange={(val) => setTotal(val)}
-              label="Total Amount to Split"
-            />
-          )}
-
-          {step === 3 && (
-            <>
-              <SPSplitTable
-                contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
-                total={total ?? 0}
-              />
-              <Box mt={2}>
-                <Typography variant="body2" color="text.secondary">
-                  Review the allocations above before confirming.
-                </Typography>
-              </Box>
-            </>
-          )}
-        </>
+      {step === 1 && (
+        <SpContacts
+          rows={contacts}
+          onSelectionChange={(sel) => setSelectedContacts(sel)}
+        />
       )}
 
+      {step === 2 && (
+        <SPAmount
+          value={total}
+          onChange={(val) => setTotal(val)}
+          label="Monto:"
+        />
+      )}
+
+      {/* --- INICIO DEL CAMBIO --- */}
+      {/* SPSplitTable ahora se renderiza solo.
+        Ya no tiene el texto "Review..." 
+      */}
+      {step === 3 && (
+        <SPSplitTable
+          contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
+          total={total ?? 0}
+        />
+      )}
+      {/* --- FIN DEL CAMBIO --- */}
+
+
       {/* Navigation Buttons */}
-      <Box mt={4} display="flex" justifyContent="space-between">
-        <Button disabled={step === 1} onClick={handleBack} variant="outlined">
-          Back
-        </Button>
+      <Box mt={4} display="flex" justifyContent={step === 1 ? 'flex-end' : 'space-between'}>
+        {/* El botón "Back" ahora se muestra en el paso 2 y 3 */}
+        {step > 1 && (
+          <Button onClick={handleBack} variant="outlined">
+            Back
+          </Button>
+        )}
+
+        {/* El botón "Next" solo se muestra en los pasos 1 y 2 */}
         {step < 3 && (
           <Button
             onClick={handleNext}
@@ -127,15 +165,10 @@ const SplitPaymentDemo: React.FC = () => {
             Next
           </Button>
         )}
-        {step === 3 && (
-          <Button
-            variant="contained"
-            color="success"
-            onClick={() => alert("Payment Confirmed!")}
-          >
-            Confirm
-          </Button>
-        )}
+        
+        {/* El botón "Confirm" del paso 3 ha sido ELIMINADO.
+          SPSplitTable ahora tiene su propio botón "Split".
+        */}
       </Box>
     </Box>
   );

@@ -1,256 +1,410 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
+  Box,
   Typography,
-  Paper,
   Stack,
+  Paper,
+  MenuItem,
+  Select,
+  FormControl,
+  SelectChangeEvent,
+  Button,
   Divider,
-  Button
+  TextField,
+  InputAdornment
 } from "@mui/material";
-import { RestartAlt as RestartAltIcon } from '@mui/icons-material';
 
+// Tipo para un contacto
 export interface Contact {
   id: string;
   name: string;
 }
 
-interface Allocation {
-  id: string;
-  name: string;
-  amount: number | string; // Permite string vacío o entradas parciales como '.'
-  percent: number | string; // Permite string vacío o entradas parciales como '.'
-}
-
+// Props para el componente
 interface SPSplitTableProps {
   contacts: Contact[];
   total: number;
-  currencySymbol?: string;
 }
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
-// Nueva función para limpiar ceros a la izquierda y asegurar un formato de número válido
-const cleanInput = (value: string): string => {
-  // Maneja el caso de cadena vacía o solo punto
-  if (value === '' || value === '.') return value;
-
-  // Usa regex para eliminar ceros iniciales si no es '0' o '0.'
-  let cleaned = value.replace(/^0+([1-9])/, '$1'); // 005 -> 5
-  cleaned = cleaned.replace(/^0+(\.|$)/, '0$1'); // 00.5 -> 0.5, 00 -> 0
-
-  return cleaned;
+// --- Funciones Helper ---
+const formatCurrency = (amount: number) => {
+  if (isNaN(amount)) amount = 0;
+  return amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
-const SPSplitTable: React.FC<SPSplitTableProps> = ({
-  contacts,
-  total,
-  currencySymbol = "$",
-}) => {
-  const [allocations, setAllocations] = useState<Allocation[]>([]);
-  const [mode, setMode] = useState<"auto" | "manual">("auto");
+const formatPercentage = (value: number) => {
+  if (isNaN(value)) value = 0;
+  // Usamos toFixed(0) para porcentajes sin decimales
+  return `${value.toFixed(0)}%`;
+};
 
-  // Función para INICIALIZAR o CALCULAR el modo automático
-  // YA NO llama a setMode("auto") para evitar el bucle
-  const calculateAndSetAutoAllocations = useCallback(() => {
-    if (contacts.length === 0) {
-      setAllocations([]);
-      return;
-    }
+// --- Componente SPSplitTable ---
+const SPSplitTable: React.FC<SPSplitTableProps> = ({ contacts, total }) => {
+  const [splitMode, setSplitMode] = useState<'equal' | 'custom'>('equal');
+  const [allocations, setAllocations] = useState<{
+    [id: string]: { value: string; lastEdited: 'amount' | 'percent' }
+  }>({});
 
-    const equalPercent = round2(100 / contacts.length);
-    const equalAmount = round2(total / contacts.length);
-
-    setAllocations(
-      contacts.map((c) => ({
-        id: c.id,
-        name: c.name,
-        amount: equalAmount,
-        percent: equalPercent,
-      }))
-    );
-    // setMode("auto"); // <--- ELIMINADO DE AQUÍ
-  }, [contacts, total]);
-
-  // Se ejecuta si los contactos, el total o el MODO cambian.
   useEffect(() => {
-    if (mode === "auto") {
-      calculateAndSetAutoAllocations();
-    }
-  }, [contacts, total, mode, calculateAndSetAutoAllocations]); // <-- ARREGLO AQUÍ
+    const newAllocations: { [id: string]: { value: string; lastEdited: 'amount' | 'percent' } } = {};
+    const numContacts = contacts.length;
 
-
-  // Manejador para la edición de input
-  const handleInputChange = (index: number, field: "amount" | "percent", rawValue: string) => {
-    // 1. Limpiar ceros a la izquierda, pero permite '.' al final
-    const cleanedValue = cleanInput(rawValue);
-
-    // 2. Si el valor es solo un número válido (no vacío ni solo '.'), lo convertimos.
-    const isNumber = !isNaN(Number(cleanedValue)) && cleanedValue !== '';
-    const numericValue = isNumber ? Number(cleanedValue) : cleanedValue;
-
-    // 3. Activar modo manual y vaciar los campos si no estábamos en manual
-    if (mode === "auto") {
-      setMode("manual");
-      // Preparamos los allocations para vaciar el campo opuesto y los demás
-      let newAllocations = allocations.map((a, i) => {
-        // El campo que se está editando puede tener el valor limpiado (string o number)
-        let updatedAllocation = { ...a };
-
-        // Si es el campo que se está editando
-        if (i === index) {
-          if (field === "amount") {
-            updatedAllocation.amount = numericValue as number | string;
-            // Calculamos el porcentaje si es un número, si no, lo vaciamos
-            updatedAllocation.percent = isNumber ? round2((numericValue as number / total) * 100) : '';
-          } else {
-            // field === "percent"
-            updatedAllocation.percent = numericValue as number | string;
-            // Calculamos el amount si es un número, si no, lo vaciamos
-            updatedAllocation.amount = isNumber ? round2((numericValue as number / 100) * total) : '';
-          }
-          return updatedAllocation;
-        }
-
-        // Para los demás campos, los vaciamos
-        return { ...a, amount: '', percent: '' };
+    if (numContacts === 0 || total === 0) {
+      contacts.forEach(contact => {
+        newAllocations[contact.id] = { value: '0', lastEdited: 'amount' };
       });
-      setAllocations(newAllocations);
-      return; // Detener el flujo para no ejecutar el cambio normal
-    }
-
-    // 4. Lógica para MODO MANUAL o después de la primera edición en AUTO
-    let newAllocations = allocations.map((a) => ({ ...a }));
-
-    // Si el valor es numérico, lo convertimos y calculamos el campo opuesto
-    if (isNumber) {
-      const val = numericValue as number;
-      if (field === "amount") {
-        newAllocations[index].amount = val;
-        newAllocations[index].percent = round2((val / total) * 100);
-      } else {
-        newAllocations[index].percent = val;
-        newAllocations[index].amount = round2((val / 100) * total);
-      }
+    } else if (splitMode === 'equal') {
+      const equalAmount = (total / numContacts).toFixed(2);
+      contacts.forEach(contact => {
+        newAllocations[contact.id] = { value: equalAmount, lastEdited: 'amount' };
+      });
     } else {
-      // Si el valor no es numérico (es '' o solo '.'), simplemente se guarda el string
-      if (field === "amount") {
-        newAllocations[index].amount = numericValue as string;
-        newAllocations[index].percent = ''; // Vaciar el opuesto
-      } else {
-        newAllocations[index].percent = numericValue as string;
-        newAllocations[index].amount = ''; // Vaciar el opuesto
-      }
+      // Reinicia a 0 cuando se cambia a 'custom'
+      contacts.forEach(contact => {
+        newAllocations[contact.id] = { value: '0', lastEdited: 'amount' };
+      });
     }
-
     setAllocations(newAllocations);
-  };
+  }, [contacts, total, splitMode]);
 
-
-  // Función que se dispara al salir del foco de un campo
-  const handleBlur = (index: number, field: "amount" | "percent") => {
-    // Solo en modo manual, si el valor es un string vacío, lo convertimos a 0 para el cálculo total
-    if (mode === "manual") {
-      const copy = allocations.map(a => ({ ...a }));
-      if (copy[index][field] === '') {
-        // @ts-ignore - asignamos número para normalizar el valor tras el blur
-        copy[index][field] = 0;
-        // Recalcular el opuesto a 0 también
-        if (field === "amount") {
-          copy[index].percent = 0;
-        } else {
-          copy[index].amount = 0;
-        }
-        setAllocations(copy);
+  const calculatedAllocations = useMemo(() => {
+    return contacts.map(contact => {
+      const alloc = allocations[contact.id];
+      if (!alloc) {
+        return { ...contact, amount: 0, percentage: 0 };
       }
-    }
+
+      const val = parseFloat(alloc.value);
+      if (isNaN(val)) {
+        return { ...contact, amount: 0, percentage: 0 };
+      }
+
+      if (splitMode === 'equal') {
+        const amount = val;
+        const percentage = (total > 0) ? (amount / total) * 100 : 0;
+        return { ...contact, amount, percentage };
+      }
+
+      if (alloc.lastEdited === 'amount') {
+        const amount = val;
+        const percentage = (total > 0) ? (amount / total) * 100 : 0;
+        return { ...contact, amount, percentage };
+      } else { // 'percent'
+        const percentage = val;
+        const amount = (total * percentage) / 100;
+        return { ...contact, amount, percentage };
+      }
+    });
+  }, [allocations, contacts, total, splitMode]);
+
+  const { amount: totalAmount, percentage: totalPercentage } = useMemo(() => {
+    return calculatedAllocations.reduce(
+      (acc, alloc) => {
+        acc.amount += alloc.amount;
+        acc.percentage += alloc.percentage;
+        return acc;
+      },
+      { amount: 0, percentage: 0 }
+    );
+  }, [calculatedAllocations]);
+
+  const { remainingAmount, remainingPercentage } = useMemo(() => {
+    const remAmount = total - totalAmount;
+    const remPercent = 100 - totalPercentage;
+    return {
+      remainingAmount: remAmount,
+      remainingPercentage: remPercent,
+    };
+  }, [total, totalAmount, totalPercentage]);
+
+  // --- Lógica de Validación (Botón y Colores) ---
+  const isSplitDisabled = useMemo(() => {
+    if (total === 0 || contacts.length === 0) return true;
+    if (splitMode === 'equal') return false; // 'Equal' siempre es válido
+
+    // En 'custom', las diferencias deben ser (casi) cero
+    const amountDifference = Math.abs(totalAmount - total);
+    const percentDifference = Math.abs(totalPercentage - 100);
+    
+    // Deshabilitado si la diferencia es mayor a 1 centavo O 1% (ajustamos % a 0.01 por si acaso)
+    return amountDifference > 0.01 || percentDifference > 0.01;
+  }, [total, contacts.length, splitMode, totalAmount, totalPercentage]);
+
+  // --- Handlers ---
+  const handleModeChange = (event: SelectChangeEvent<'equal' | 'custom'>) => {
+    setSplitMode(event.target.value as 'equal' | 'custom');
   };
 
-
-  // Cálculos totales para el pie de tabla
-  const totalAssigned = allocations.reduce((sum, a) => sum + (Number(a.amount) || 0), 0);
-  const percentAssigned = allocations.reduce((sum, a) => sum + (Number(a.percent) || 0), 0);
-  const remainingAmount = round2(total - totalAssigned);
-  const remainingPercent = round2(100 - percentAssigned);
-
-  // NUEVO: Handler para el botón, solo cambia el modo.
-  const handleResetToAuto = () => {
-    setMode("auto");
-    // El useEffect reaccionará a este cambio y recalculará
+  const handleSplit = () => {
+    alert("Split Confirmado:\n" + JSON.stringify(calculatedAllocations, null, 2));
   };
 
+  const handleAllocationChange = (
+    contactId: string,
+    value: string,
+    type: 'amount' | 'percent'
+  ) => {
+    setAllocations(prev => ({
+      ...prev,
+      [contactId]: { value: value, lastEdited: type }
+    }));
+  };
 
   return (
-    <Paper elevation={3} sx={{ p: 2, borderRadius: 2 }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <Typography variant="h6">
-          Allocation Split - <span style={{ color: mode === 'auto' ? 'green' : 'orange' }}>{mode.toUpperCase()} MODE</span>
+    <Stack spacing={2}>
+      
+      {/* === CAJA DE MODO === */}
+      <Paper
+        elevation={0}
+        sx={{ bgcolor: 'grey.200', p: 2, borderRadius: 2 }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, color: 'grey.700' }}>
+          Modo:
         </Typography>
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={handleResetToAuto} // 👈 USA EL NUEVO HANDLER
-          startIcon={<RestartAltIcon />}
+        <FormControl fullWidth>
+          <Select
+            value={splitMode}
+            onChange={handleModeChange}
+            sx={{
+              bgcolor: 'common.white',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+            }}
+          >
+            <MenuItem value="equal">Todos por igual</MenuItem>
+            <MenuItem value="custom">Personalizado</MenuItem>
+          </Select>
+        </FormControl>
+      </Paper>
+
+      {/* --- INICIO CAMBIO 1: APARTADO "TOTAL DE LA CUENTA" --- */}
+      {/* Esta caja SIEMPRE es visible para recordar el objetivo */}
+      <Paper
+        elevation={0}
+        sx={{
+          bgcolor: 'grey.100', // Un fondo neutro
+          border: '1px solid',
+          borderColor: 'grey.300',
+          p: 1.5,
+          borderRadius: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+          Total de la Cuenta:
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            fontWeight: 'bold',
+          }}
         >
-          Auto Mode
-        </Button>
-      </Stack>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>Contact</TableCell>
-            <TableCell>Amount ({currencySymbol})</TableCell>
-            <TableCell>%</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {allocations.map((a, i) => (
-            <TableRow key={a.id}>
-              <TableCell>
-                <Typography variant="body2">{a.name}</Typography>
-              </TableCell>
-              <TableCell>
-                <TextField
-                  size="small"
-                  type="text" // Cambiado a 'text' para permitir la limpieza de ceros con lógica JS
-                  value={a.amount}
-                  onChange={(e) => handleInputChange(i, "amount", e.target.value)}
-                  onBlur={() => handleBlur(i, "amount")} // Manejar el blur
-                  slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
-                />
-              </TableCell>
-              <TableCell>
-                <TextField
-                  size="small"
-                  type="text" // Cambiado a 'text'
-                  value={a.percent}
-                  onChange={(e) => handleInputChange(i, "percent", e.target.value)}
-                  onBlur={() => handleBlur(i, "percent")} // Manejar el blur
-                  slotProps={{ htmlInput: { min: 0, step: 0.01 } }}
-                />
-              </TableCell>
-            </TableRow>
+          {formatCurrency(total)} (100%)
+        </Typography>
+      </Paper>
+      {/* --- FIN CAMBIO 1 --- */}
+
+      {/* === ENCABEZADO DE LA LISTA === */}
+      <Paper
+        elevation={0}
+        sx={{
+          bgcolor: 'grey.200',
+          p: '12px 16px',
+          borderRadius: 2,
+          display: 'grid',
+          gridTemplateColumns: '1fr 100px 80px',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: 'grey.700' }}>
+          Contacto:
+        </Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', textAlign: 'right', color: 'grey.700' }}>
+          $
+        </Typography>
+        <Typography variant="subtitle1" sx={{ fontWeight: 'bold', textAlign: 'right', color: 'grey.700' }}>
+          %
+        </Typography>
+      </Paper>
+
+      {/* === LISTA DE CONTACTOS Y TOTAL === */}
+      <Paper
+        elevation={0}
+        sx={{
+          bgcolor: 'common.white',
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'grey.200',
+          overflow: 'hidden',
+        }}
+      >
+        <Stack divider={<Divider flexItem />}>
+          
+          {/* --- Filas de Contactos --- */}
+          {calculatedAllocations.map((contact) => (
+            <Box
+              key={contact.id}
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 100px 80px',
+                alignItems: 'center',
+                gap: 1.5,
+                p: 1.5,
+              }}
+            >
+              <Typography variant="body1" noWrap sx={{ fontWeight: 500 }}>
+                {contact.name}
+              </Typography>
+              
+              {splitMode === 'equal' ? (
+                <>
+                  <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                    {formatCurrency(contact.amount)}
+                  </Typography>
+                  <Typography variant="body1" sx={{ textAlign: 'right' }}>
+                    {formatPercentage(contact.percentage)}
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <TextField
+                    type="number"
+                    size="small"
+                    value={allocations[contact.id]?.lastEdited === 'amount' ? allocations[contact.id]?.value : contact.amount.toFixed(2)}
+                    onChange={(e) => handleAllocationChange(contact.id, e.target.value, 'amount')}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                      sx: { fontSize: '0.9rem' }
+                    }}
+                  />
+                  <TextField
+                    type="number"
+                    size="small"
+                    value={allocations[contact.id]?.lastEdited === 'percent' ? allocations[contact.id]?.value : contact.percentage.toFixed(0)}
+                    onChange={(e) => handleAllocationChange(contact.id, e.target.value, 'percent')}
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                      sx: { fontSize: '0.9rem' }
+                    }}
+                  />
+                </>
+              )}
+            </Box>
           ))}
-        </TableBody>
-      </Table>
-      <Divider sx={{ my: 1 }} />
-      <Stack direction="row" justifyContent="space-between">
-        <Typography variant="body2">
-          **Total assigned:** {currencySymbol}
-          {totalAssigned.toFixed(2)} / {percentAssigned.toFixed(2)}%
-        </Typography>
-        <Typography variant="body2" color={remainingAmount === 0 && remainingPercent === 0 ? "green" : "error"}>
-          **Remaining:** {currencySymbol}
-          {remainingAmount.toFixed(2)} / {remainingPercent.toFixed(2)}%
-        </Typography>
-      </Stack>
-    </Paper>
+          
+          {/* --- Fila de Total (Running Total) --- */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 100px 80px',
+              alignItems: 'center',
+              gap: 1.5,
+              p: 2,
+              bgcolor: 'grey.50'
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              Total Asignado
+            </Typography>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 'bold', 
+                textAlign: 'right',
+                // Lógica de color: rojo si es incorrecto, azul si es correcto
+                color: isSplitDisabled ? 'error.main' : 'primary.main'
+              }}
+            >
+              {formatCurrency(totalAmount)}
+            </Typography>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontWeight: 'bold', 
+                textAlign: 'right',
+                color: isSplitDisabled ? 'error.main' : 'primary.main'
+              }}
+            >
+              {formatPercentage(totalPercentage)}
+            </Typography>
+          </Box>
+        </Stack>
+      </Paper>
+
+      {/* --- INICIO CAMBIO 2: APARTADO "RESTANTE" (REEMPLAZA AL ANTERIOR) --- */}
+      {/* Esta caja solo aparece en modo 'custom' */}
+      {splitMode === 'custom' && (
+        <Paper
+          elevation={0}
+          sx={{
+            // Rojo si está deshabilitado (incorrecto), Azul si está habilitado (correcto)
+            bgcolor: isSplitDisabled ? 'rgba(211, 47, 47, 0.08)' : 'rgba(0, 118, 255, 0.08)',
+            p: 1.5,
+            borderRadius: 2,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              fontWeight: 'bold', 
+              color: isSplitDisabled ? 'error.main' : 'primary.main'
+            }}
+          >
+            {/* Cambia el texto: si está correcto, dice "Completo". Si no, dice qué pasa. */}
+            {isSplitDisabled 
+              ? (remainingAmount > 0 ? 'Falta por asignar:' : 'Sobra:')
+              : 'Asignación Completa'}
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 'bold',
+              color: isSplitDisabled ? 'error.main' : 'primary.main'
+            }}
+          >
+            {/* Muestra cuánto falta/sobra. Si está correcto, muestra $0.00 */}
+            {isSplitDisabled
+              ? `${formatCurrency(Math.abs(remainingAmount))} (${formatPercentage(Math.abs(remainingPercentage))})`
+              : `${formatCurrency(0)} (0%)`
+            }
+          </Typography>
+        </Paper>
+      )}
+      {/* --- FIN CAMBIO 2 --- */}
+
+      {/* === BOTÓN SPLIT === */}
+      <Button
+        variant="contained"
+        fullWidth
+        onClick={handleSplit}
+        sx={{
+          mt: 2,
+          py: 1.5,
+          fontSize: '1.1rem',
+          fontWeight: 'bold',
+          borderRadius: 2.5,
+          textTransform: 'none',
+          boxShadow: '0 4px 14px 0 rgba(0, 118, 255, 0.39)',
+        }}
+        // La lógica de 'disabled' ya estaba correcta y conectada
+        disabled={isSplitDisabled}
+      >
+        Split
+      </Button>
+    </Stack>
   );
 };
 

@@ -1,212 +1,184 @@
-import React, { useEffect, useState } from "react";
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import {
-Box,
-TextField,
-InputAdornment,
-Typography,
-Paper,
-FormHelperText,
-} from "@mui/material";
+  Box,
+  TextField,
+  Typography,
+  InputAdornment,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Paper,
+} from '@mui/material';
 
-type SPAmountProps = {
-value?: number | null;
-onChange?: (value: number | null) => void;
-label?: string;
-currencySymbol?: string;
-placeholder?: string;
-min?: number;
-max?: number;
-required?: boolean;
-};
-
-const formatMoney = (value: number | null, currencySymbol = "$") => {
-if (value === null || isNaN(value)) return "";
-// Localized formatting with two decimals
-return (
-    currencySymbol +
-    value.toLocaleString(undefined, {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-    })
-);
-};
-
-const parseToNumber = (raw: string) => {
-if (!raw) return null;
-// Remove currency symbol, spaces and thousands separators (commas)
-const cleaned = raw.replace(/[^\d.-]/g, "");
-if (cleaned === "" || cleaned === "." || cleaned === "-") return null;
-const n = Number(cleaned);
-return Number.isFinite(n) ? n : null;
-};
-
-const validateMoney = (
-raw: string,
-{ min, max, required }: { min?: number; max?: number; required?: boolean }
-) => {
-if (!raw || raw.trim() === "") {
-    if (required) return "Amount is required";
-    return null;
+// --- Props ---
+interface SPAmountProps {
+  value: number | null;
+  onChange: (value: number | null) => void;
+  label: string;
 }
 
-// Allow digits, optional one decimal point, up to 2 decimals
-const cleaned = raw.replace(/[^\d.-]/g, "");
-// Reject multiple dots or multiple minus signs
-if ((cleaned.match(/\./g) || []).length > 1) return "Invalid amount format";
-if ((cleaned.match(/-/g) || []).length > 1) return "Invalid amount format";
-
-// Regex to validate typical money formats: optional leading -, digits, optional . and up to 2 decimals
-if (!/^-?\d+(\.\d{0,2})?$/.test(cleaned)) {
-    return "Use a numeric amount, up to 2 decimal places";
-}
-
-const n = Number(cleaned);
-if (!isFinite(n)) return "Invalid amount";
-
-if (min !== undefined && n < min) return `Minimum is ${min}`;
-if (max !== undefined && n > max) return `Maximum is ${max}`;
-
-return null;
+// --- Función Helper para formatear Moneda ---
+const formatCurrency = (amount: number | null) => {
+  if (amount === null || isNaN(amount) || amount === 0) {
+    return '$0.00';
+  }
+  return amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+  });
 };
 
-const SPAmount: React.FC<SPAmountProps> = ({
-value = null,
-onChange,
-label = "Amount",
-currencySymbol = "$",
-placeholder = "0.00",
-min,
-max,
-required = false,
-}) => {
-const [display, setDisplay] = useState<string>(
-    value !== null && value !== undefined ? formatMoney(value, currencySymbol) : ""
-);
-const [error, setError] = useState<string | null>(null);
-const [touched, setTouched] = useState(false);
+// --- Componente SPAmount ---
+const SPAmount: React.FC<SPAmountProps> = ({ value, onChange, label }) => {
+  const [baseAmount, setBaseAmount] = useState<string>('');
+  const [tipPercent, setTipPercent] = useState<string | null>(null);
+  const [customTip, setCustomTip] = useState<string>('');
 
-useEffect(() => {
-    // Keep display in sync when external value changes
-    if (value === null || value === undefined) {
-        setDisplay("");
-    } else {
-        setDisplay(formatMoney(value, currencySymbol));
+  useEffect(() => {
+    const parsedBase = parseFloat(baseAmount);
+
+    if (isNaN(parsedBase) || parsedBase <= 0) {
+      onChange(null);
+      return;
     }
-}, [value, currencySymbol]);
 
-const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    // Keep whatever user types, but run quick client-side filter to allowed chars
-    // Allow digits, dots, commas, currency symbol and spaces while typing
-    setDisplay(raw);
-    if (!touched) setTouched(true);
-
-    const validation = validateMoney(raw, { min, max, required });
-    setError(validation);
-
-    const parsed = parseToNumber(raw);
-    if (onChange) onChange(parsed);
-};
-
-const handleBlur = () => {
-    setTouched(true);
-    const validation = validateMoney(display, { min, max, required });
-    setError(validation);
-
-    const parsed = parseToNumber(display);
-    // If valid number, format nicely; else keep raw for correction
-    if (parsed !== null && validation === null) {
-        setDisplay(formatMoney(parsed, currencySymbol));
+    let percent = 0;
+    if (tipPercent === 'custom') {
+      percent = parseFloat(customTip);
+    } else if (tipPercent) {
+      percent = parseFloat(tipPercent);
     }
-};
 
-const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // On focus, show plain numeric representation to allow easy editing
-    const parsed = parseToNumber(display);
-    if (parsed !== null) {
-        // Keep up to 2 decimals
-        setDisplay(parsed.toString());
-    } else {
-        // Remove currency symbol to let user type
-        const raw = display.replace(new RegExp(`\\${currencySymbol}`, "g"), "");
-        setDisplay(raw);
+    if (isNaN(percent) || percent < 0) {
+      percent = 0;
     }
-    (e.target as HTMLInputElement).select();
-};
 
-return (
-    <Paper
-        elevation={3}
-        sx={{
-            p: 2,
-            borderRadius: 2,
-            background:
-                "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,255,0.95))",
-        }}
-    >
-        <Box display="flex" alignItems="center" gap={2} flexDirection="column">
-            <Box width="100%" display="flex" justifyContent="space-between" mb={1}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                    {label}
-                </Typography>
-                <Box display="flex" alignItems="center" gap={1}>
-                <Box display="flex" alignItems="center" gap={1}>
-                    <Box
-                        component="span"
-                        sx={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            width: 24,
-                            height: 24,
-                            bgcolor: "primary.main",
-                            color: "primary.contrastText",
-                            borderRadius: "50%",
-                            fontSize: 14,
-                            fontWeight: 600,
-                        }}
-                    >
-                        {currencySymbol}
-                    </Box>
-                    <Typography variant="caption" color="text.secondary">
-                        {currencySymbol} — two decimals allowed
-                    </Typography>
-                </Box>
+    const tipAmount = parsedBase * (percent / 100);
+    const newTotal = parsedBase + tipAmount;
 
+    onChange(newTotal);
+  }, [baseAmount, tipPercent, customTip, onChange]);
+
+  const handleTipChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newTip: string | null
+  ) => {
+    setTipPercent(newTip);
+  };
+
+  const handleCustomTipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustomTip(e.target.value);
+    setTipPercent('custom');
+  };
+
+  return (
+    <Stack spacing={2}>
+      {/* === CAJA DE MONTO === */}
+      <Paper
+        elevation={0}
+        sx={{ bgcolor: 'grey.200', p: 2, borderRadius: 2 }}
+      >
+        <TextField
+          label={label}
+          value={baseAmount}
+          onChange={(e) => setBaseAmount(e.target.value)}
+          type="number"
+          placeholder="0.00"
+          fullWidth
+          InputProps={{
+            startAdornment: <InputAdornment position="start">$</InputAdornment>,
+          }}
+          sx={{ bgcolor: 'common.white' }}
+        />
+      </Paper>
+
+      {/* === CAJA DE EXTRA (PROPINA) === */}
+      <Paper
+        elevation={0}
+        sx={{ bgcolor: 'grey.200', p: 2, borderRadius: 2 }}
+      >
+        <Stack spacing={1.5}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+            Extra:
+          </Typography>
+          
+          {/* --- INICIO DEL CAMBIO --- */}
+          {/* Se movió el estilo al 'ToggleButtonGroup' */}
+          <ToggleButtonGroup
+            value={tipPercent}
+            exclusive
+            onChange={handleTipChange}
+            fullWidth
+            aria-label="tip percentage"
+            sx={{
+              // Targeta a cualquier hijo ToggleButton que esté seleccionado
+              '& .MuiToggleButton-root.Mui-selected': {
+                bgcolor: '#D32F2F', // Color rojo
+                color: 'common.white', // Texto blanco
+                // Mantiene el color al pasar el mouse por encima
+                '&:hover': {
+                  bgcolor: '#D32F2F',
+                },
+              },
+            }}
+          >
+            <ToggleButton value="5" aria-label="5 percent tip">
+              +5%
+            </ToggleButton>
+            <ToggleButton value="10" aria-label="10 percent tip">
+              +10%
+            </ToggleButton>
+            {/* Se quitó el 'sx' individual de este botón */}
+            <ToggleButton value="15" aria-label="15 percent tip">
+              +15%
+            </ToggleButton>
+            <ToggleButton value="custom" aria-label="custom tip">
+              +...%
+            </ToggleButton>
+          </ToggleButtonGroup>
+          {/* --- FIN DEL CAMBIO --- */}
+
+          {tipPercent === 'custom' && (
             <TextField
-                fullWidth
-                variant="outlined"
-                value={display}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                onFocus={handleFocus}
-                placeholder={placeholder}
-                error={!!error && touched}
-                helperText={touched && error ? error : "Enter the amount to split"}
-                InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">{currencySymbol}</InputAdornment>
-                    ),
-                    sx: {
-                        borderRadius: 2,
-                        bgcolor: "background.paper",
-                    },
-                    inputMode: "decimal",
-                }}
+              label="Custom %"
+              type="number"
+              value={customTip}
+              onChange={handleCustomTipChange}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              }}
+              fullWidth
+              variant="outlined"
+              size="small"
+              sx={{ mt: 1, bgcolor: 'common.white' }}
             />
+          )}
+        </Stack>
+      </Paper>
 
-            {min !== undefined || max !== undefined ? (
-                <FormHelperText sx={{ mt: 1 }}>
-                    {min !== undefined ? `Min: ${min}` : ""}
-                    {min !== undefined && max !== undefined ? " • " : ""}
-                    {max !== undefined ? `Max: ${max}` : ""}
-                </FormHelperText>
-            ) : null}
-        </Box>
-        </Box>
-        </Box>
-    </Paper>
-);
+      {/* === CAJA DE TOTAL === */}
+      <Paper
+        elevation={0}
+        sx={{ bgcolor: 'grey.200', p: 2, borderRadius: 2 }}
+      >
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            Total:
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            {formatCurrency(value)}
+          </Typography>
+        </Stack>
+      </Paper>
+    </Stack>
+  );
 };
 
 export default SPAmount;
