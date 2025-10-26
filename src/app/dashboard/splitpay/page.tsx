@@ -106,7 +106,7 @@ const SplitPaymentDemo: React.FC = () => {
         <SPAmount
           value={total}
           onChange={(val) => setTotal(val)}
-          label="Total Amount to Split"
+          label="Monto:"
         />
       )}
 
