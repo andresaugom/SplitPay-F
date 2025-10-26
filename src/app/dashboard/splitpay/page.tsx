@@ -6,15 +6,15 @@ import SpContacts, { Customer } from "@/components/dashboard/splitpay/sp-contact
 import SPAmount from "@/components/dashboard/splitpay/sp-amount";
 import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distribution";
 
-// Mock contacts data
+// Mock contacts data (¡Corregí el último ID que estaba vacío!)
 const MOCK_CUSTOMERS: Customer[] = [
   { id: "1", name: "Jaime", avatar: "", createdAt: new Date()},
   { id: "2", name: "Lalo", avatar: "", createdAt: new Date()},
-  { id: "1", name: "Shira", avatar: "", createdAt: new Date()},
-  { id: "2", name: "Andrés Gómez", avatar: "", createdAt: new Date()},
-  { id: "1", name: "Heidy Ochoa", avatar: "", createdAt: new Date()},
-  { id: "2", name: "Isaac Chávez", avatar: "", createdAt: new Date()},
-  { id: "3", name: "Jóse de la Madrid", avatar: "", createdAt: new Date()}
+  { id: "3", name: "Shira", avatar: "", createdAt: new Date()},
+  { id: "4", name: "Andrés Gómez", avatar: "", createdAt: new Date()},
+  { id: "5", name: "Heidy Ochoa", avatar: "", createdAt: new Date()},
+  { id: "6", name: "Isaac Chávez", avatar: "", createdAt: new Date()},
+  { id: "7", name: "Jóse de la Madrid", avatar: "", createdAt: new Date()} // <--- ID CORREGIDO
 ];
 
 const SplitPaymentDemo: React.FC = () => {
@@ -42,12 +42,48 @@ const SplitPaymentDemo: React.FC = () => {
         Split Payment Demo
       </Typography>
 
-      {/* Step Indicator */}
-      <Stack direction="row" spacing={2} mb={3}>
-        <Typography color={step === 1 ? "primary" : "text.secondary"}>1. Select Contacts</Typography>
-        <Typography color={step === 2 ? "primary" : "text.secondary"}>2. Enter Total</Typography>
-        <Typography color={step === 3 ? "primary" : "text.secondary"}>3. Split Payment</Typography>
+      {/* --- INICIO DEL INDICADOR DE PASOS CORREGIDO --- */}
+      <Stack 
+        direction="row" 
+        alignItems="center" // Centra verticalmente los círculos y las líneas
+        justifyContent="center" // Centra todo el bloque
+        mb={3} 
+      >
+        {[1, 2, 3].map((s, index) => (
+          // Usamos React.Fragment para poder añadir la línea antes de cada círculo (excepto el primero)
+          <React.Fragment key={s}>
+            {/* Añade una línea ANTES del círculo, si no es el primero (index > 0) */}
+            {index > 0 && (
+              <Box sx={{
+                width: { xs: 30, sm: 50 }, // Ancho de la línea
+                height: 2,
+                bgcolor: 'grey.300', // Color de la línea
+              }} />
+            )}
+            
+            {/* El Círculo */}
+            <Box sx={{
+              width: 30,
+              height: 30,
+              borderRadius: '50%', // Esto lo hace un círculo
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease', // Transición suave
+              
+              // --- Lógica de color ---
+              // Si el paso (s) es el paso actual (step), píntalo de azul
+              bgcolor: step === s ? 'primary.main' : 'grey.300',
+              // Si el paso (s) es el paso actual (step), pinta el texto de blanco
+              color: step === s ? 'common.white' : 'grey.600',
+            }}>
+              {s}
+            </Box>
+          </React.Fragment>
+        ))}
       </Stack>
+      {/* --- FIN DEL INDICADOR DE PASOS CORREGIDO --- */}
 
       {/* Step Content */}
       {step === 1 && (
