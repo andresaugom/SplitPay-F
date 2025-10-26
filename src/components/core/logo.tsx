@@ -6,8 +6,8 @@ import { useColorScheme } from '@mui/material/styles';
 
 import { NoSsr } from '@/components/core/no-ssr';
 
-const HEIGHT = 60;
-const WIDTH = 60;
+const HEIGHT = 120;
+const WIDTH = 120;
 
 type Color = 'dark' | 'light';
 
@@ -22,14 +22,30 @@ export function Logo({ color = 'dark', emblem, height = HEIGHT, width = WIDTH }:
   let url: string;
 
   if (emblem) {
-    url = color === 'light' ? '/assets/logo-emblem.png' : '/assets/logo-emblem--dark.png';
+    url = color === 'light' ? '/assets/logoSplitPay.png' : '/assets/logoSplitPay.png';
   } else {
-    url = color === 'light' ? '/assets/logo.png' : '/assets/logo--dark.png';
+    url = color === 'light' ? '/assets/logoSplitPay.png' : '/assets/logoSplitPay.png';
   }
 
-  return <Box alt="logo" component="img" height={height} src={url} width={width} />;
+  return (
+    <Box
+      alt="img"
+      component="img"
+      src={url}
+      // --- INICIO DE CAMBIOS ---
+      sx={{
+        height: height, // Pasa height como CSS
+        width: width,   // Pasa width como CSS
+        objectFit: 'contain' // Tu línea es correcta
+      }}
+      // --- FIN DE CAMBIOS ---
+      
+      // Borra esto, ya no es necesario
+      // height={height}
+      // width={width}
+    />
+  );
 }
-
 export interface DynamicLogoProps {
   colorDark?: Color;
   colorLight?: Color;
