@@ -12,7 +12,7 @@ import {
   Paper,
   Stack,
   Divider,
-  Button // 👈 Importar Button
+  Button
 } from "@mui/material";
 import { RestartAlt as RestartAltIcon } from '@mui/icons-material';
 

@@ -1,22 +1,49 @@
 'use client';
 
-import React, { useState } from "react";
-import { Box, Button, Typography, Stack } from "@mui/material";
-import SpContacts, { Customer } from "@/components/dashboard/splitpay/sp-contacts";
+import React, { useState, useEffect } from "react";
+import { Box, Button, Typography, Stack, CircularProgress, Alert } from "@mui/material";
+import SpContacts from "@/components/dashboard/splitpay/sp-contacts";
 import SPAmount from "@/components/dashboard/splitpay/sp-amount";
 import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distribution";
 
-// Mock contacts data
-const MOCK_CUSTOMERS: Customer[] = [
-  { id: "1", name: "Ana", avatar: "", createdAt: new Date()},
-  { id: "2", name: "Luis", avatar: "", createdAt: new Date()},
-  { id: "3", name: "Andrés", avatar: "", createdAt: new Date()}
-];
+const api = process.env.NEXT_PUBLIC_API_URL;
 
 const SplitPaymentDemo: React.FC = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedContacts, setSelectedContacts] = useState<Customer[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
   const [total, setTotal] = useState<number | null>(null);
+
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch contacts al cargar el componente
+  useEffect(() => {
+    const fetchContacts = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${api}/contacts`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+
+        const data: Contact[] = await res.json();
+        setContacts(data);
+        setError(null);
+      } catch (err: any) {
+        console.error("Error fetching contacts:", err);
+        setError("Could not load contacts. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContacts();
+  }, []);
 
   const canProceedStep1 = selectedContacts.length > 0;
   const canProceedStep2 = total !== null && total > 0;
@@ -44,33 +71,45 @@ const SplitPaymentDemo: React.FC = () => {
         <Typography color={step === 3 ? "primary" : "text.secondary"}>3. Split Payment</Typography>
       </Stack>
 
+      {/* Estado de carga / error */}
+      {loading && (
+        <Box display="flex" justifyContent="center" mt={4}>
+          <CircularProgress />
+        </Box>
+      )}
+      {error && <Alert severity="error">{error}</Alert>}
+
       {/* Step Content */}
-      {step === 1 && (
-        <SpContacts
-          rows={MOCK_CUSTOMERS}
-          onSelectionChange={(sel) => setSelectedContacts(sel)}
-        />
-      )}
-
-      {step === 2 && (
-        <SPAmount
-          value={total}
-          onChange={(val) => setTotal(val)}
-          label="Total Amount to Split"
-        />
-      )}
-
-      {step === 3 && (
+      {!loading && !error && (
         <>
-          <SPSplitTable
-            contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
-            total={total ?? 0}
-          />
-          <Box mt={2}>
-            <Typography variant="body2" color="text.secondary">
-              Review the allocations above before confirming.
-            </Typography>
-          </Box>
+          {step === 1 && (
+            <SpContacts
+              rows={contacts}
+              onSelectionChange={(sel) => setSelectedContacts(sel)}
+            />
+          )}
+
+          {step === 2 && (
+            <SPAmount
+              value={total}
+              onChange={(val) => setTotal(val)}
+              label="Total Amount to Split"
+            />
+          )}
+
+          {step === 3 && (
+            <>
+              <SPSplitTable
+                contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
+                total={total ?? 0}
+              />
+              <Box mt={2}>
+                <Typography variant="body2" color="text.secondary">
+                  Review the allocations above before confirming.
+                </Typography>
+              </Box>
+            </>
+          )}
         </>
       )}
 
@@ -89,7 +128,11 @@ const SplitPaymentDemo: React.FC = () => {
           </Button>
         )}
         {step === 3 && (
-          <Button variant="contained" color="success" onClick={() => alert("Payment Confirmed!")}>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => alert("Payment Confirmed!")}
+          >
             Confirm
           </Button>
         )}

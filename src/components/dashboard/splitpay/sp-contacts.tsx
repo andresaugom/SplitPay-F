@@ -22,22 +22,21 @@ function noop(): void {
     // do nothing
 }
 
-export interface Customer {
+export interface Contact {
     id: string;
-    avatar: string;
     name: string;
-    createdAt: Date;
+    avatar?: string;
 }
 
-interface CustomersTableProps {
+interface ContactsTableProps {
     count?: number;
     page?: number;
-    rows?: Customer[];
+    rows?: Contact[];
     rowsPerPage?: number;
     /**
      * Callback invoked when selection changes. Receives the currently selected customers.
      */
-    onSelectionChange?: (selected: Customer[]) => void;
+    onSelectionChange?: (selected: Contact[]) => void;
 }
 
 export default function SpContacts({
@@ -46,9 +45,9 @@ export default function SpContacts({
     page = 0,
     rowsPerPage = 0,
     onSelectionChange,
-}: CustomersTableProps): React.JSX.Element {
+}: ContactsTableProps): React.JSX.Element {
     const rowIds = React.useMemo(() => {
-        return rows.map((customer) => customer.id);
+        return rows.map((contact) => contact.id);
     }, [rows]);
 
     const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
