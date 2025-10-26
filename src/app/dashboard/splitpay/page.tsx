@@ -6,7 +6,7 @@ import SpContacts, { Customer } from "@/components/dashboard/splitpay/sp-contact
 import SPAmount from "@/components/dashboard/splitpay/sp-amount";
 import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distribution";
 
-// Mock contacts data
+// Mock contacts data (¡Corregí el último ID que estaba vacío!)
 const MOCK_CUSTOMERS: Customer[] = [
   { id: "1", name: "Jaime", avatar: "", createdAt: new Date() },
   { id: "2", name: "Lalo", avatar: "", createdAt: new Date() },
