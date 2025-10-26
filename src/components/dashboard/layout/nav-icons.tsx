@@ -1,10 +1,16 @@
-import type { Icon } from '@phosphor-icons/react/dist/lib/types';
+import type { ElementType } from 'react';
 import { ChartPieIcon } from '@phosphor-icons/react/dist/ssr/ChartPie';
 import { GearSixIcon } from '@phosphor-icons/react/dist/ssr/GearSix';
 import { PlugsConnectedIcon } from '@phosphor-icons/react/dist/ssr/PlugsConnected';
 import { UserIcon } from '@phosphor-icons/react/dist/ssr/User';
 import { UsersIcon } from '@phosphor-icons/react/dist/ssr/Users';
 import { XSquare } from '@phosphor-icons/react/dist/ssr/XSquare';
+import MuiCurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
+
+// Adaptador para el icono de MUI
+const CurrencyExchangeIcon = (props: { fill?: string; fontSize?: string }) => {
+  return <MuiCurrencyExchangeIcon sx={{ color: props.fill, fontSize: props.fontSize }} />;
+};
 
 export const navIcons = {
   'chart-pie': ChartPieIcon,
@@ -13,4 +19,5 @@ export const navIcons = {
   'x-square': XSquare,
   user: UserIcon,
   users: UsersIcon,
-} as Record<string, Icon>;
+  'CurrencyExchangeIcon': CurrencyExchangeIcon, // Tu icono añadido
+} as Record<string, ElementType>;

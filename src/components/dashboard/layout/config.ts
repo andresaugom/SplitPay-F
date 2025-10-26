@@ -2,10 +2,8 @@ import type { NavItemConfig } from '@/types/nav';
 import { paths } from '@/paths';
 
 export const navItems = [
-  { key: 'overview', title: 'Overview', href: paths.dashboard.overview, icon: 'chart-pie' },
-  { key: 'contacts', title: 'Contacts', href: paths.dashboard.customers, icon: 'users' },
-  { key: 'splitpay', title: 'SplitPay', href: paths.dashboard.splitpay, icon: 'plugs-connected' },
-  { key: 'settings', title: 'Settings', href: paths.dashboard.settings, icon: 'gear-six' },
-  { key: 'account', title: 'Account', href: paths.dashboard.account, icon: 'user' },
-  { key: 'error', title: 'Error', href: paths.errors.notFound, icon: 'x-square' },
+  { key: 'overview', title: 'SplitPay', href: paths.dashboard.splitpay, icon: 'CurrencyExchangeIcon' },
+  { key: 'account', title: 'Mi cuenta', href: paths.dashboard.account, icon: 'user' },
+  { key: 'contacts', title: 'Contactos', href: paths.dashboard.customers, icon: 'users' },
+  { key: 'settings', title: 'Configuración', href: paths.dashboard.settings, icon: 'gear-six' },
 ] satisfies NavItemConfig[];
