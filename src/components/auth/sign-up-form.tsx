@@ -25,8 +25,9 @@ import { useUser } from '@/hooks/use-user';
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const schema = zod.object({
-  firstName: zod.string().min(1, { message: 'First name is required' }),
-  lastName: zod.string().min(1, { message: 'Last name is required' }),
+  first_name: zod.string().min(1, { message: 'First name is required' }),
+  last_name: zod.string().min(1, { message: 'Last name is required' }),
+  username: zod.string().min(1, { message: 'Username is required' }),
   email: zod.string().min(1, { message: 'Email is required' }).email(),
   password: zod.string().min(6, { message: 'Password should be at least 6 characters' }),
   terms: zod.boolean().refine((value) => value, 'You must accept the terms and conditions'),
@@ -49,8 +50,9 @@ export function SignUpForm(): React.JSX.Element {
   } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
+      first_name: '',
+      last_name: '',
+      username: '',
       email: '',
       password: '',
       terms: false,
@@ -67,8 +69,9 @@ export function SignUpForm(): React.JSX.Element {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            first_name: values.firstName,
-            last_name: values.lastName,
+            first_name: values.first_name,
+            last_name: values.last_name,
+            username: values.username,
             email: values.email,
             password: values.password,
           }),
@@ -81,7 +84,6 @@ export function SignUpForm(): React.JSX.Element {
 
         const data = await response.json();
 
-        // ✅ Guardamos tokens y datos de usuario
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('user', JSON.stringify(data.user));
@@ -117,24 +119,36 @@ export function SignUpForm(): React.JSX.Element {
         <Stack spacing={2}>
           <Controller
             control={control}
-            name="firstName"
+            name="first_name"
             render={({ field }) => (
-              <FormControl error={Boolean(errors.firstName)}>
+              <FormControl error={Boolean(errors.first_name)}>
                 <InputLabel>First name</InputLabel>
                 <OutlinedInput {...field} label="First name" />
-                {errors.firstName && <FormHelperText>{errors.firstName.message}</FormHelperText>}
+                {errors.first_name && <FormHelperText>{errors.first_name.message}</FormHelperText>}
               </FormControl>
             )}
           />
 
           <Controller
             control={control}
-            name="lastName"
+            name="last_name"
             render={({ field }) => (
-              <FormControl error={Boolean(errors.lastName)}>
+              <FormControl error={Boolean(errors.last_name)}>
                 <InputLabel>Last name</InputLabel>
                 <OutlinedInput {...field} label="Last name" />
-                {errors.lastName && <FormHelperText>{errors.lastName.message}</FormHelperText>}
+                {errors.last_name && <FormHelperText>{errors.last_name.message}</FormHelperText>}
+              </FormControl>
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="username"
+            render={({ field }) => (
+              <FormControl error={Boolean(errors.username)}>
+                <InputLabel>Username</InputLabel>
+                <OutlinedInput {...field} label="Username" />
+                {errors.username && <FormHelperText>{errors.username.message}</FormHelperText>}
               </FormControl>
             )}
           />

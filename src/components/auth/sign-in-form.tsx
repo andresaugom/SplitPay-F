@@ -19,12 +19,29 @@ import { Controller, useForm } from 'react-hook-form';
 import { z as zod } from 'zod';
 
 import { paths } from '@/paths';
+
 import { useUser } from '@/hooks/use-user';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL
+interface User {
+  id: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  [key: string]: any;
+}
+
+interface UseUserResult {
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+  checkSession: () => Promise<void>;
+  signOut: () => void;
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 const schema = zod.object({
-  email: zod.string().min(1, { message: 'Email is required' }).email(),
+  identifier: zod.string().min(1, { message: 'Identifier is required' }),
   password: zod.string().min(1, { message: 'Password is required' }),
 });
 
@@ -32,7 +49,74 @@ type Values = zod.infer<typeof schema>;
 
 export function SignInForm(): React.JSX.Element {
   const router = useRouter();
-  const { checkSession } = useUser();
+
+  // User session management (local implementation)
+  const [user, setUser] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [sessionError, setSessionError] = React.useState<string | null>(null);
+
+  const checkSession = React.useCallback(async (): Promise<void> => {
+    setIsLoading(true);
+    setSessionError(null);
+
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const refresh = localStorage.getItem('refresh_token');
+        if (refresh) {
+          const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refresh }),
+          });
+
+          if (refreshRes.ok) {
+            const data: any = await refreshRes.json();
+            localStorage.setItem('access_token', data.access_token);
+            localStorage.setItem('refresh_token', data.refresh_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setUser(data.user);
+          } else {
+            localStorage.clear();
+            setUser(null);
+          }
+        } else {
+          localStorage.clear();
+          setUser(null);
+        }
+      } else {
+        const data: any = await res.json();
+        setUser(data.user || data);
+        localStorage.setItem('user', JSON.stringify(data.user || data));
+      }
+    } catch (err: any) {
+      setSessionError(err.message || 'Error verifying session');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    checkSession();
+  }, [checkSession]);
+
+  const signOut = React.useCallback(() => {
+    localStorage.clear();
+    setUser(null);
+  }, []);
+
   const [showPassword, setShowPassword] = React.useState(false);
   const [isPending, setIsPending] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
@@ -42,7 +126,7 @@ export function SignInForm(): React.JSX.Element {
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } });
+  } = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { identifier: '', password: '' } });
 
   const onSubmit = React.useCallback(
     async (values: Values): Promise<void> => {
@@ -65,15 +149,13 @@ export function SignInForm(): React.JSX.Element {
 
         const data = await response.json();
 
-        // ✅ Aquí puedes guardar el token (localStorage, cookies, context, etc.)
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('user', JSON.stringify(data.user));
 
-        // Actualiza el estado global de usuario si existe
-        await checkSession?.();
+        await checkSession();
 
-        router.push(paths.dashboard.overview); // Redirige al dashboard o donde prefieras
+        router.push(paths.dashboard.overview);
       } catch (err: any) {
         const message = err.message || 'Something went wrong';
         setError('root', { type: 'server', message });
@@ -101,12 +183,12 @@ export function SignInForm(): React.JSX.Element {
         <Stack spacing={2}>
           <Controller
             control={control}
-            name="email"
+            name="identifier"
             render={({ field }) => (
-              <FormControl error={Boolean(errors.email)}>
-                <InputLabel>Email address</InputLabel>
-                <OutlinedInput {...field} value={field.value ?? ''} label="Email address" type="email" />
-                {errors.email && <FormHelperText>{errors.email.message}</FormHelperText>}
+              <FormControl error={Boolean(errors.identifier)}>
+                <InputLabel>Identifier</InputLabel>
+                <OutlinedInput {...field} value={field.value ?? ''} label="Identifier" type="text" />
+                {errors.identifier && <FormHelperText>{errors.identifier.message}</FormHelperText>}
               </FormControl>
             )}
           />
