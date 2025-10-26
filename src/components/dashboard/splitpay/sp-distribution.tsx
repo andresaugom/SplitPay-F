@@ -56,8 +56,9 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({
   const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [mode, setMode] = useState<"auto" | "manual">("auto");
 
-  // Función para inicializar o resetear al modo automático
-  const initializeAutoMode = useCallback(() => {
+  // Función para INICIALIZAR o CALCULAR el modo automático
+  // YA NO llama a setMode("auto") para evitar el bucle
+  const calculateAndSetAutoAllocations = useCallback(() => {
     if (contacts.length === 0) {
       setAllocations([]);
       return;
@@ -74,24 +75,15 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({
         percent: equalPercent,
       }))
     );
-    setMode("auto");
+    // setMode("auto"); // <--- ELIMINADO DE AQUÍ
   }, [contacts, total]);
 
-  // Inicializa allocations cuando cambian contactos o total, o si se resetea a 'auto'
+  // Se ejecuta si los contactos, el total o el MODO cambian.
   useEffect(() => {
     if (mode === "auto") {
-      initializeAutoMode();
+      calculateAndSetAutoAllocations();
     }
-    // NOTA: No incluimos initializeAutoMode en las dependencias para evitar bucle
-    // ya que solo queremos que se ejecute la inicialización en 'auto' mode.
-    // Al inicio, 'mode' es 'auto', por lo que se ejecuta.
-    // La re-inicialización por cambio de `contacts` o `total` se maneja aquí.
-    // Si la queremos en 'auto' al inicio, se ejecuta. Si `contacts` o `total` cambian,
-    // se re-ejecuta solo si estamos en modo 'auto'.
-    // Si queremos que el efecto solo se ejecute al inicio, y la función al llamar el botón
-    // quitar `contacts` y `total` del array de dependencias.
-    // Pero si `contacts` o `total` cambian y estamos en modo 'auto', es lógico recalcular.
-  }, [contacts, total, mode, initializeAutoMode]);
+  }, [contacts, total, mode, calculateAndSetAutoAllocations]); // <-- ARREGLO AQUÍ
 
 
   // Manejador para la edición de input
@@ -135,49 +127,49 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({
 
     // 4. Lógica para MODO MANUAL o después de la primera edición en AUTO
     let newAllocations = allocations.map((a) => ({ ...a }));
-    
+
     // Si el valor es numérico, lo convertimos y calculamos el campo opuesto
     if (isNumber) {
-        const val = numericValue as number;
-        if (field === "amount") {
-            newAllocations[index].amount = val;
-            newAllocations[index].percent = round2((val / total) * 100);
-        } else {
-            newAllocations[index].percent = val;
-            newAllocations[index].amount = round2((val / 100) * total);
-        }
+      const val = numericValue as number;
+      if (field === "amount") {
+        newAllocations[index].amount = val;
+        newAllocations[index].percent = round2((val / total) * 100);
+      } else {
+        newAllocations[index].percent = val;
+        newAllocations[index].amount = round2((val / 100) * total);
+      }
     } else {
-        // Si el valor no es numérico (es '' o solo '.'), simplemente se guarda el string
-        if (field === "amount") {
-            newAllocations[index].amount = numericValue as string;
-            newAllocations[index].percent = ''; // Vaciar el opuesto
-        } else {
-            newAllocations[index].percent = numericValue as string;
-            newAllocations[index].amount = ''; // Vaciar el opuesto
-        }
+      // Si el valor no es numérico (es '' o solo '.'), simplemente se guarda el string
+      if (field === "amount") {
+        newAllocations[index].amount = numericValue as string;
+        newAllocations[index].percent = ''; // Vaciar el opuesto
+      } else {
+        newAllocations[index].percent = numericValue as string;
+        newAllocations[index].amount = ''; // Vaciar el opuesto
+      }
     }
-    
+
     setAllocations(newAllocations);
   };
 
 
   // Función que se dispara al salir del foco de un campo
   const handleBlur = (index: number, field: "amount" | "percent") => {
-      // Solo en modo manual, si el valor es un string vacío, lo convertimos a 0 para el cálculo total
-      if (mode === "manual") {
-          const copy = allocations.map(a => ({...a}));
-          if (copy[index][field] === '') {
-              // @ts-ignore - asignamos número para normalizar el valor tras el blur
-              copy[index][field] = 0;
-              // Recalcular el opuesto a 0 también
-              if (field === "amount") {
-                  copy[index].percent = 0;
-              } else {
-                  copy[index].amount = 0;
-              }
-              setAllocations(copy);
-          }
+    // Solo en modo manual, si el valor es un string vacío, lo convertimos a 0 para el cálculo total
+    if (mode === "manual") {
+      const copy = allocations.map(a => ({ ...a }));
+      if (copy[index][field] === '') {
+        // @ts-ignore - asignamos número para normalizar el valor tras el blur
+        copy[index][field] = 0;
+        // Recalcular el opuesto a 0 también
+        if (field === "amount") {
+          copy[index].percent = 0;
+        } else {
+          copy[index].amount = 0;
+        }
+        setAllocations(copy);
       }
+    }
   };
 
 
@@ -186,6 +178,12 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({
   const percentAssigned = allocations.reduce((sum, a) => sum + (Number(a.percent) || 0), 0);
   const remainingAmount = round2(total - totalAssigned);
   const remainingPercent = round2(100 - percentAssigned);
+
+  // NUEVO: Handler para el botón, solo cambia el modo.
+  const handleResetToAuto = () => {
+    setMode("auto");
+    // El useEffect reaccionará a este cambio y recalculará
+  };
 
 
   return (
@@ -197,7 +195,7 @@ const SPSplitTable: React.FC<SPSplitTableProps> = ({
         <Button
           variant="outlined"
           color="primary"
-          onClick={initializeAutoMode} // 👈 Botón de reinicio
+          onClick={handleResetToAuto} // 👈 USA EL NUEVO HANDLER
           startIcon={<RestartAltIcon />}
         >
           Auto Mode
