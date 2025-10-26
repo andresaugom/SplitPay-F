@@ -6,7 +6,7 @@ import SpContacts, { Customer } from "@/components/dashboard/splitpay/sp-contact
 import SPAmount from "@/components/dashboard/splitpay/sp-amount";
 import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distribution";
 
-// Mock contacts data (¡Corregí el último ID que estaba vacío!)
+// Mock contacts data
 const MOCK_CUSTOMERS: Customer[] = [
   { id: "1", name: "Jaime", avatar: "", createdAt: new Date()},
   { id: "2", name: "Lalo", avatar: "", createdAt: new Date()},
@@ -14,7 +14,7 @@ const MOCK_CUSTOMERS: Customer[] = [
   { id: "4", name: "Andrés Gómez", avatar: "", createdAt: new Date()},
   { id: "5", name: "Heidy Ochoa", avatar: "", createdAt: new Date()},
   { id: "6", name: "Isaac Chávez", avatar: "", createdAt: new Date()},
-  { id: "7", name: "Jóse de la Madrid", avatar: "", createdAt: new Date()} // <--- ID CORREGIDO
+  { id: "7", name: "Jóse de la Madrid", avatar: "", createdAt: new Date()}
 ];
 
 const SplitPaymentDemo: React.FC = () => {
@@ -47,44 +47,36 @@ const SplitPaymentDemo: React.FC = () => {
     fontWeight: 900,          // Fuente muy gruesa (como en la imagen)
   }}
 > 
-  {/* --- CAMBIO AQUÍ --- */}
-  {step === 1 ? "Splitters" : (step === 2 ? "SplitInfo" : "Split Details")}
+  {step === 1 ? "Splitters" : (step === 2 ? "SplitInfo" : "SplitConfig")}
 </Typography>
 
-      {/* --- INICIO DEL INDICADOR DE PASOS CORREGIDO --- */}
+      {/* --- INDICADOR DE PASOS --- */}
       <Stack 
         direction="row" 
-        alignItems="center" // Centra verticalmente los círculos y las líneas
-        justifyContent="center" // Centra todo el bloque
+        alignItems="center"
+        justifyContent="center"
         mb={3} 
       >
         {[1, 2, 3].map((s, index) => (
-          // Usamos React.Fragment para poder añadir la línea antes de cada círculo (excepto el primero)
           <React.Fragment key={s}>
-            {/* Añade una línea ANTES del círculo, si no es el primero (index > 0) */}
             {index > 0 && (
               <Box sx={{
-                width: { xs: 30, sm: 50 }, // Ancho de la línea
+                width: { xs: 30, sm: 50 },
                 height: 2,
-                bgcolor: 'grey.300', // Color de la línea
+                bgcolor: 'grey.300',
               }} />
             )}
             
-            {/* El Círculo */}
             <Box sx={{
               width: 30,
               height: 30,
-              borderRadius: '50%', // Esto lo hace un círculo
+              borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontWeight: 'bold',
-              transition: 'all 0.3s ease', // Transición suave
-              
-              // --- Lógica de color ---
-              // Si el paso (s) es el paso actual (step), píntalo de azul
+              transition: 'all 0.3s ease',
               bgcolor: step === s ? 'primary.main' : 'grey.300',
-              // Si el paso (s) es el paso actual (step), pinta el texto de blanco
               color: step === s ? 'common.white' : 'grey.600',
             }}>
               {s}
@@ -92,7 +84,7 @@ const SplitPaymentDemo: React.FC = () => {
           </React.Fragment>
         ))}
       </Stack>
-      {/* --- FIN DEL INDICADOR DE PASOS CORREGIDO --- */}
+      {/* --- FIN DEL INDICADOR DE PASOS --- */}
 
       {/* Step Content */}
       {step === 1 && (
@@ -110,25 +102,29 @@ const SplitPaymentDemo: React.FC = () => {
         />
       )}
 
+      {/* --- INICIO DEL CAMBIO --- */}
+      {/* SPSplitTable ahora se renderiza solo.
+        Ya no tiene el texto "Review..." 
+      */}
       {step === 3 && (
-        <>
-          <SPSplitTable
-            contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
-            total={total ?? 0}
-          />
-          <Box mt={2}>
-            <Typography variant="body2" color="text.secondary">
-              Review the allocations above before confirming.
-            </Typography>
-          </Box>
-        </>
+        <SPSplitTable
+          contacts={selectedContacts.map(c => ({ id: c.id, name: c.name }))}
+          total={total ?? 0}
+        />
       )}
+      {/* --- FIN DEL CAMBIO --- */}
+
 
       {/* Navigation Buttons */}
-      <Box mt={4} display="flex" justifyContent="space-between">
-        <Button disabled={step === 1} onClick={handleBack} variant="outlined">
-          Back
-        </Button>
+      <Box mt={4} display="flex" justifyContent={step === 1 ? 'flex-end' : 'space-between'}>
+        {/* El botón "Back" ahora se muestra en el paso 2 y 3 */}
+        {step > 1 && (
+          <Button onClick={handleBack} variant="outlined">
+            Back
+          </Button>
+        )}
+
+        {/* El botón "Next" solo se muestra en los pasos 1 y 2 */}
         {step < 3 && (
           <Button
             onClick={handleNext}
@@ -138,11 +134,10 @@ const SplitPaymentDemo: React.FC = () => {
             Next
           </Button>
         )}
-        {step === 3 && (
-          <Button variant="contained" color="success" onClick={() => alert("Payment Confirmed!")}>
-            Confirm
-          </Button>
-        )}
+        
+        {/* El botón "Confirm" del paso 3 ha sido ELIMINADO.
+          SPSplitTable ahora tiene su propio botón "Split".
+        */}
       </Box>
     </Box>
   );
