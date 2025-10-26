@@ -6,7 +6,7 @@ export const capitalBlue = {
   200: '#9cc8e9',
   300: '#6da9db',
   400: '#468bca',
-  500: '#0460A9', // main blue
+  500: '#0276b1', // main blue (replaced with project blue)
   600: '#004879',
   700: '#00355d',
   800: '#002844',
@@ -14,13 +14,18 @@ export const capitalBlue = {
   950: '#001524',
 } satisfies PartialColor;
 
+// Project-wide single-color constants
+export const white = '#ffffff';
+export const black = '#000000';
+
+
 export const capitalRed = {
   50: '#fdecea',
   100: '#fbd0cb',
   200: '#f3a199',
   300: '#eb7269',
   400: '#e0493f',
-  500: '#D03027', // swoosh red
+  500: '#d03027', // swoosh red (replaced with project red)
   600: '#b72620',
   700: '#8f1e19',
   800: '#671714',
@@ -30,12 +35,12 @@ export const capitalRed = {
 
 export const capitalGray = {
   50: '#f9fafb',
-  100: '#f3f4f6',
-  200: '#e5e7eb',
+  100: '#dddddd', // light gray (user provided)
+  200: '#d9d9d9', // secondary light gray (user provided)
   300: '#d1d5db',
   400: '#9ca3af',
-  500: '#6b7280',
-  600: '#4b5563',
+  500: '#545454', // main gray (user provided)
+  600: '#444444',
   700: '#374151',
   800: '#1f2937',
   900: '#111827',
