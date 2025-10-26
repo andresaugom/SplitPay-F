@@ -26,8 +26,6 @@ export interface Customer {
     id: string;
     avatar: string;
     name: string;
-    email: string;
-    phone: string;
     createdAt: Date;
 }
 
@@ -113,8 +111,6 @@ export default function SpContacts({
                                             <Typography variant="subtitle2">{row.name}</Typography>
                                         </Stack>
                                     </TableCell>
-                                    <TableCell>{row.email}</TableCell>
-                                    <TableCell>{row.phone}</TableCell>
                                 </TableRow>
                             );
                         })}

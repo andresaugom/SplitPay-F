@@ -8,9 +8,9 @@ import SPSplitTable, { Contact } from "@/components/dashboard/splitpay/sp-distri
 
 // Mock contacts data
 const MOCK_CUSTOMERS: Customer[] = [
-  { id: "1", name: "Ana", email: "ana@mail.com", phone: "123", avatar: "" , createdAt: new Date()},
-  { id: "2", name: "Luis", email: "luis@mail.com", phone: "456", avatar: "" , createdAt: new Date()},
-  { id: "3", name: "Andrés", email: "andres@mail.com", phone: "789", avatar: "" , createdAt: new Date()},
+  { id: "1", name: "Ana", avatar: "", createdAt: new Date()},
+  { id: "2", name: "Luis", avatar: "", createdAt: new Date()},
+  { id: "3", name: "Andrés", avatar: "", createdAt: new Date()}
 ];
 
 const SplitPaymentDemo: React.FC = () => {
